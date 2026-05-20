@@ -6,8 +6,8 @@
           <span>{{ isEdit ? '编辑活动' : '新增活动' }}</span>
           <div>
             <el-button @click="$router.back()">返回</el-button>
-            <el-button type="primary" @click="saveActivity(0)">保存草稿</el-button>
-            <el-button type="success" @click="saveActivity(1)">保存并开放报名</el-button>
+            <el-button type="primary" @click="saveActivity(0)" v-permission="isEdit ? 'activity:update' : 'activity:create'">保存草稿</el-button>
+            <el-button type="success" @click="saveActivity(1)" v-permission="isEdit ? 'activity:update' : 'activity:create'">保存并开放报名</el-button>
           </div>
         </div>
       </template>
@@ -33,7 +33,7 @@
               <img v-if="form.thumbnail" :src="form.thumbnail" class="thumbnail" />
               <el-icon v-else class="upload-icon"><Plus /></el-icon>
             </el-upload>
-            <el-button v-if="form.thumbnail" type="danger" size="small" @click="form.thumbnail = ''">删除</el-button>
+            <el-button v-if="form.thumbnail" type="danger" size="small" @click="form.thumbnail = ''" v-permission="isEdit ? 'activity:update' : 'activity:create'">删除</el-button>
           </div>
         </el-form-item>
 

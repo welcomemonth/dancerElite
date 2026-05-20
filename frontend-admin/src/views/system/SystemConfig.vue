@@ -5,8 +5,8 @@
         <div class="card-header">
           <span>系统配置</span>
           <div>
-            <el-button type="primary" @click="saveAll" :loading="saving">保存所有修改</el-button>
-            <el-button @click="showAddDialog = true">新增配置</el-button>
+            <el-button type="primary" @click="saveAll" :loading="saving" v-permission="'system_config:create'">保存所有修改</el-button>
+            <el-button @click="showAddDialog = true" v-permission="'system_config:create'">新增配置</el-button>
           </div>
         </div>
       </template>
@@ -70,7 +70,7 @@
         </el-table-column>
         <el-table-column label="操作" width="100">
           <template #default="scope">
-            <el-button size="small" type="danger" @click="deleteConfig(scope.row)">删除</el-button>
+            <el-button size="small" type="danger" @click="deleteConfig(scope.row)" v-permission="'system_config:delete'">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -104,7 +104,7 @@
       </el-form>
       <template #footer>
         <el-button @click="showAddDialog = false">取消</el-button>
-        <el-button type="primary" @click="addConfig">确定</el-button>
+        <el-button type="primary" @click="addConfig" v-permission="'system_config:create'">确定</el-button>
       </template>
     </el-dialog>
   </div>

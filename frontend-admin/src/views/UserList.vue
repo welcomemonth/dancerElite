@@ -1,50 +1,100 @@
 <template>
   <div class="user-list">
-    <h1>用户列表</h1>
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>手机号</th>
-          <th>OpenID</th>
-          <th>姓名</th>
-          <th>创建时间</th>
-          <th>更新时间</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="item in users" :key="item.id">
-          <td><router-link :to="`/admin/users/${item.id}`">{{ item.id }}</router-link></td>
-          <td>{{ item.phone || '-' }}</td>
-          <td>{{ item.openid || '-' }}</td>
-          <td>{{ item.name || '-' }}</td>
-          <td>{{ item.created_at }}</td>
-          <td>{{ item.updated_at }}</td>
-        </tr>
-      </tbody>
-    </table>
+    <el-card>
+      <template #header>
+        <div class="card-header">
+          <span>小程序用户</span>
+          <el-button @click="fetchUsers">
+            <el-icon><Refresh /></el-icon>
+            刷新
+          </el-button>
+        </div>
+      </template>
+
+      <el-table :data="users" v-loading="loading" style="width: 100%">
+        <el-table-column prop="id" label="ID" width="90" />
+        <el-table-column prop="phone" label="手机号" min-width="140">
+          <template #default="{ row }">{{ row.phone || '-' }}</template>
+        </el-table-column>
+        <el-table-column prop="openid" label="OpenID" min-width="220" show-overflow-tooltip>
+          <template #default="{ row }">{{ row.openid || '-' }}</template>
+        </el-table-column>
+        <el-table-column prop="name" label="姓名" min-width="120">
+          <template #default="{ row }">{{ row.name || '-' }}</template>
+        </el-table-column>
+        <el-table-column prop="status" label="状态" width="90">
+          <template #default="{ row }">
+            <el-tag :type="row.status === 1 ? 'success' : 'danger'">
+              {{ row.status === 1 ? '启用' : '禁用' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="created_at" label="创建时间" min-width="180">
+          <template #default="{ row }">{{ formatDate(row.created_at) }}</template>
+        </el-table-column>
+        <el-table-column label="操作" width="120" fixed="right">
+          <template #default="{ row }">
+            <el-button size="small" @click="$router.push(`/admin/users/${row.id}`)" v-permission="'user:get'">详情</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <el-pagination
+        v-model:current-page="query.page"
+        v-model:page-size="query.page_size"
+        :total="total"
+        :page-sizes="[10, 20, 50, 100]"
+        layout="total, sizes, prev, pager, next, jumper"
+        @size-change="fetchUsers"
+        @current-change="fetchUsers"
+      />
+    </el-card>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
+import { ElMessage } from 'element-plus'
+import { Refresh } from '@element-plus/icons-vue'
 import { userApi } from '../api'
 
+const loading = ref(false)
 const users = ref([])
-const error = ref('')
-
-onMounted(async () => {
-  try {
-    const data = await userApi.list()
-    users.value = data.list || data || []
-  } catch (e) {
-    error.value = '加载用户失败'
-  }
+const total = ref(0)
+const query = ref({
+  page: 1,
+  page_size: 20
 })
+
+const fetchUsers = async () => {
+  loading.value = true
+  try {
+    const data = await userApi.list(query.value)
+    users.value = data.list || []
+    total.value = data.total || 0
+  } catch (error) {
+    ElMessage.error('加载用户失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+const formatDate = (value) => {
+  if (!value) return '-'
+  return new Date(value).toLocaleString('zh-CN', { hour12: false })
+}
+
+onMounted(fetchUsers)
 </script>
 
 <style scoped>
-.user-list { padding: 1em; }
-table { width: 100%; border-collapse: collapse; }
-th, td { padding: 0.5em; border: 1px solid #ccc; text-align: left; }
-</style> 
+.user-list {
+  padding: 20px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+</style>

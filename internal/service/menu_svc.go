@@ -85,7 +85,7 @@ func (s *MenuService) InitDefaultMenus(ctx context.Context) error {
 	var count int64
 	s.db.WithContext(ctx).Model(&model.Menu{}).Count(&count)
 	if count > 0 {
-		return nil
+		return s.ensureDefaultMenuPermissions(ctx)
 	}
 
 	// 内容管理目录
@@ -136,16 +136,180 @@ func (s *MenuService) InitDefaultMenus(ctx context.Context) error {
 	codegenMenu := model.Menu{ParentID: codegenDir.ID, Name: "codegen-config", Title: "生成配置", Path: "/admin/codegen", Component: "codegen/CodegenList", Icon: "Cpu", Sort: 1, Type: 2, Status: 1}
 	s.db.WithContext(ctx).Create(&codegenMenu)
 
-	// 为 admin 角色分配所有菜单
-	var allMenus []model.Menu
-	s.db.WithContext(ctx).Find(&allMenus)
+	return s.ensureDefaultMenuPermissions(ctx)
+}
 
-	var adminRole model.Role
-	if err := s.db.WithContext(ctx).Where("name = ?", "admin").First(&adminRole).Error; err == nil {
-		for _, m := range allMenus {
-			s.db.WithContext(ctx).Create(&model.RoleMenu{RoleID: adminRole.ID, MenuID: m.ID})
+type defaultPermission struct {
+	Action string
+	Title  string
+	Method string
+	Sort   int
+}
+
+func (s *MenuService) ensureDefaultMenuPermissions(ctx context.Context) error {
+	permissions := map[string][]defaultPermission{
+		"articles": {
+			{Action: "list", Title: "查看文章列表", Method: "GET", Sort: 1},
+			{Action: "get", Title: "查看文章详情", Method: "GET", Sort: 2},
+			{Action: "create", Title: "新增文章", Method: "POST", Sort: 3},
+			{Action: "update", Title: "编辑文章", Method: "PUT", Sort: 4},
+			{Action: "update_status", Title: "更新文章状态", Method: "PUT", Sort: 5},
+			{Action: "delete", Title: "删除文章", Method: "DELETE", Sort: 6},
+		},
+		"columns": {
+			{Action: "list", Title: "查看栏目列表", Method: "GET", Sort: 1},
+			{Action: "get", Title: "查看栏目详情", Method: "GET", Sort: 2},
+			{Action: "create", Title: "新增栏目", Method: "POST", Sort: 3},
+			{Action: "update", Title: "编辑栏目", Method: "PUT", Sort: 4},
+			{Action: "delete", Title: "删除栏目", Method: "DELETE", Sort: 5},
+		},
+		"mp-users": {
+			{Action: "list", Title: "查看用户列表", Method: "GET", Sort: 1},
+			{Action: "get", Title: "查看用户详情", Method: "GET", Sort: 2},
+			{Action: "update", Title: "编辑用户", Method: "PUT", Sort: 3},
+			{Action: "delete", Title: "删除用户", Method: "DELETE", Sort: 4},
+		},
+		"backend-users": {
+			{Action: "list", Title: "查看后台用户列表", Method: "GET", Sort: 1},
+			{Action: "get", Title: "查看后台用户详情", Method: "GET", Sort: 2},
+			{Action: "create", Title: "新增后台用户", Method: "POST", Sort: 3},
+			{Action: "update", Title: "编辑后台用户", Method: "PUT", Sort: 4},
+			{Action: "update_status", Title: "更新后台用户状态", Method: "PUT", Sort: 5},
+			{Action: "update_reset-password", Title: "重置后台用户密码", Method: "PUT", Sort: 6},
+			{Action: "delete", Title: "删除后台用户", Method: "DELETE", Sort: 7},
+		},
+		"roles": {
+			{Action: "list", Title: "查看角色列表", Method: "GET", Sort: 1},
+			{Action: "get", Title: "查看角色详情", Method: "GET", Sort: 2},
+			{Action: "menus", Title: "查看角色权限", Method: "GET", Sort: 3},
+			{Action: "create", Title: "新增角色", Method: "POST", Sort: 4},
+			{Action: "update", Title: "编辑角色", Method: "PUT", Sort: 5},
+			{Action: "update_status", Title: "更新角色状态", Method: "PUT", Sort: 6},
+			{Action: "update_menus", Title: "编辑角色权限", Method: "PUT", Sort: 7},
+			{Action: "delete", Title: "删除角色", Method: "DELETE", Sort: 8},
+		},
+		"menus": {
+			{Action: "list", Title: "查看菜单列表", Method: "GET", Sort: 1},
+			{Action: "get", Title: "查看菜单详情", Method: "GET", Sort: 2},
+			{Action: "create", Title: "新增菜单", Method: "POST", Sort: 3},
+			{Action: "update", Title: "编辑菜单", Method: "PUT", Sort: 4},
+			{Action: "update_status", Title: "更新菜单状态", Method: "PUT", Sort: 5},
+			{Action: "delete", Title: "删除菜单", Method: "DELETE", Sort: 6},
+		},
+		"operation-logs": {
+			{Action: "list", Title: "查看操作日志", Method: "GET", Sort: 1},
+		},
+		"system-configs": {
+			{Action: "list", Title: "查看系统配置", Method: "GET", Sort: 1},
+			{Action: "create", Title: "新增系统配置", Method: "POST", Sort: 2},
+			{Action: "delete", Title: "删除系统配置", Method: "DELETE", Sort: 3},
+		},
+		"activities": {
+			{Action: "list", Title: "查看活动列表", Method: "GET", Sort: 1},
+			{Action: "get", Title: "查看活动详情", Method: "GET", Sort: 2},
+			{Action: "create", Title: "新增活动", Method: "POST", Sort: 3},
+			{Action: "update", Title: "编辑活动", Method: "PUT", Sort: 4},
+			{Action: "update_status", Title: "更新活动状态", Method: "PUT", Sort: 5},
+			{Action: "delete", Title: "删除活动", Method: "DELETE", Sort: 6},
+		},
+		"registrations": {
+			{Action: "list", Title: "查看报名列表", Method: "GET", Sort: 1},
+			{Action: "get", Title: "查看报名详情", Method: "GET", Sort: 2},
+		},
+		"payments": {
+			{Action: "list", Title: "查看支付列表", Method: "GET", Sort: 1},
+			{Action: "get", Title: "查看支付详情", Method: "GET", Sort: 2},
+			{Action: "update_refund", Title: "退款", Method: "PUT", Sort: 3},
+		},
+		"codegen-config": {
+			{Action: "list", Title: "查看生成配置列表", Method: "GET", Sort: 1},
+			{Action: "get", Title: "查看生成配置详情", Method: "GET", Sort: 2},
+			{Action: "preview", Title: "预览生成配置", Method: "GET", Sort: 3},
+			{Action: "create", Title: "新建生成配置", Method: "POST", Sort: 4},
+			{Action: "update", Title: "编辑生成配置", Method: "PUT", Sort: 5},
+			{Action: "update_generate", Title: "生成代码", Method: "POST", Sort: 6},
+			{Action: "delete", Title: "删除生成配置", Method: "DELETE", Sort: 7},
+		},
+	}
+
+	for menuName, items := range permissions {
+		var parent model.Menu
+		if err := s.db.WithContext(ctx).Where("name = ? AND type = 2", menuName).First(&parent).Error; err != nil {
+			continue
+		}
+
+		module := permissionModule(menuName)
+		for _, item := range items {
+			permission := module + ":" + item.Action
+			var count int64
+			s.db.WithContext(ctx).Model(&model.Menu{}).
+				Where("parent_id = ? AND permission = ? AND type = 3", parent.ID, permission).
+				Count(&count)
+			if count > 0 {
+				continue
+			}
+
+			menu := model.Menu{
+				ParentID:   parent.ID,
+				Name:       parent.Name + "-" + item.Action,
+				Title:      item.Title,
+				Sort:       item.Sort,
+				Type:       3,
+				Permission: permission,
+				Method:     item.Method,
+				Status:     1,
+			}
+			if err := s.db.WithContext(ctx).Create(&menu).Error; err != nil {
+				return err
+			}
 		}
 	}
 
+	return s.assignAllMenusToAdmin(ctx)
+}
+
+func permissionModule(menuName string) string {
+	modules := map[string]string{
+		"mp-users":       "user",
+		"backend-users":  "backend_user",
+		"operation-logs": "operation_log",
+		"system-configs": "system_config",
+		"codegen-config": "codegen",
+	}
+	if module, ok := modules[menuName]; ok {
+		return module
+	}
+	if len(menuName) > 3 && menuName[len(menuName)-3:] == "ies" {
+		return menuName[:len(menuName)-3] + "y"
+	}
+	if len(menuName) > 1 && menuName[len(menuName)-1:] == "s" {
+		return menuName[:len(menuName)-1]
+	}
+	return menuName
+}
+
+func (s *MenuService) assignAllMenusToAdmin(ctx context.Context) error {
+	var adminRole model.Role
+	if err := s.db.WithContext(ctx).Where("name = ?", "admin").First(&adminRole).Error; err != nil {
+		return nil
+	}
+
+	var allMenus []model.Menu
+	if err := s.db.WithContext(ctx).Find(&allMenus).Error; err != nil {
+		return err
+	}
+
+	for _, menu := range allMenus {
+		var count int64
+		s.db.WithContext(ctx).Model(&model.RoleMenu{}).
+			Where("role_id = ? AND menu_id = ?", adminRole.ID, menu.ID).
+			Count(&count)
+		if count > 0 {
+			continue
+		}
+		if err := s.db.WithContext(ctx).Create(&model.RoleMenu{RoleID: adminRole.ID, MenuID: menu.ID}).Error; err != nil {
+			return err
+		}
+	}
 	return nil
 }

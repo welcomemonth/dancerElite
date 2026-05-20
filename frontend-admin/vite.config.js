@@ -6,7 +6,8 @@ export default defineConfig({
   plugins: [vue()],
   base: '/web/',
   build: {
-    outDir: 'dist',
+    outDir: '../internal/web/dist',
+    emptyOutDir: true,
     assetsDir: 'assets'
   }
 })

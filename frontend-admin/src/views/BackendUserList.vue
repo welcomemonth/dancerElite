@@ -7,7 +7,7 @@
           <el-button 
             type="primary" 
             @click="showCreateDialog = true"
-            v-if="canManageUsers"
+            v-permission="'backend_user:create'"
           >
             <el-icon><Plus /></el-icon>
             新增用户
@@ -38,13 +38,14 @@
             {{ formatDate(scope.row.created_at) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="300" v-if="canManageUsers">
+        <el-table-column label="操作" width="300" v-if="canOperateUsers">
           <template #default="scope">
-            <el-button size="small" @click="editUser(scope.row)">编辑</el-button>
+            <el-button size="small" @click="editUser(scope.row)" v-permission="'backend_user:update'">编辑</el-button>
             <el-button 
               size="small" 
               :type="scope.row.status === 1 ? 'warning' : 'success'"
               @click="toggleUserStatus(scope.row)"
+              v-permission="'backend_user:update_status'"
             >
               {{ scope.row.status === 1 ? '禁用' : '启用' }}
             </el-button>
@@ -52,6 +53,7 @@
               size="small" 
               type="danger"
               @click="resetPassword(scope.row)"
+              v-permission="'backend_user:update_reset-password'"
             >
               重置密码
             </el-button>
@@ -60,6 +62,7 @@
               type="danger" 
               @click="deleteUser(scope.row)"
               :disabled="scope.row.id === currentUserId"
+              v-permission="'backend_user:delete'"
             >
               删除
             </el-button>
@@ -101,7 +104,7 @@
       </el-form>
       <template #footer>
         <el-button @click="showCreateDialog = false">取消</el-button>
-        <el-button type="primary" @click="createUser" :loading="createLoading">确定</el-button>
+        <el-button type="primary" @click="createUser" :loading="createLoading" v-permission="'backend_user:create'">确定</el-button>
       </template>
     </el-dialog>
 
@@ -127,7 +130,7 @@
       </el-form>
       <template #footer>
         <el-button @click="showEditDialog = false">取消</el-button>
-        <el-button type="primary" @click="updateUser" :loading="editLoading">确定</el-button>
+        <el-button type="primary" @click="updateUser" :loading="editLoading" v-permission="'backend_user:update'">确定</el-button>
       </template>
     </el-dialog>
 
@@ -152,6 +155,7 @@
           @click="confirmResetPassword" 
           :loading="resetLoading"
           v-if="!newPassword"
+          v-permission="'backend_user:update_reset-password'"
         >
           确定重置
         </el-button>
@@ -165,6 +169,7 @@ import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { backendUserApi, roleApi } from '../api'
+import { usePermissionStore } from '../store/permission'
 
 const loading = ref(false)
 const createLoading = ref(false)
@@ -177,6 +182,7 @@ const showEditDialog = ref(false)
 const showPasswordDialog = ref(false)
 const selectedUser = ref(null)
 const newPassword = ref('')
+const permissionStore = usePermissionStore()
 
 const pagination = ref({
   page: 1,
@@ -216,11 +222,13 @@ const createRules = {
 
 // 获取当前用户信息
 const currentUserId = ref(null)
-const currentUserRole = ref('')
-
-// 检查是否有管理用户的权限
-const canManageUsers = computed(() => {
-  return currentUserRole.value === 'admin'
+const canOperateUsers = computed(() => {
+  return [
+    'backend_user:update',
+    'backend_user:update_status',
+    'backend_user:update_reset-password',
+    'backend_user:delete',
+  ].some(perm => permissionStore.hasPermission(perm))
 })
 
 onMounted(() => {
@@ -233,7 +241,6 @@ const getCurrentUser = () => {
   // 从localStorage获取用户信息
   const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
   currentUserId.value = userInfo.id
-  currentUserRole.value = userInfo.role
 }
 
 const fetchRoles = async () => {

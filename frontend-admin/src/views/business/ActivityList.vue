@@ -4,7 +4,7 @@
       <template #header>
         <div class="card-header">
           <span>活动管理</span>
-          <el-button type="primary" @click="createActivity">新增活动</el-button>
+          <el-button type="primary" @click="createActivity" v-permission="'activity:create'">新增活动</el-button>
         </div>
       </template>
 
@@ -47,16 +47,17 @@
         </el-table-column>
         <el-table-column label="操作" width="250" fixed="right">
           <template #default="scope">
-            <el-button size="small" @click="editActivity(scope.row.id)">编辑</el-button>
+            <el-button size="small" @click="editActivity(scope.row.id)" v-permission="'activity:update'">编辑</el-button>
             <el-button
               size="small"
               :type="scope.row.status === 1 ? 'warning' : 'success'"
               @click="toggleStatus(scope.row)"
               v-if="scope.row.status <= 1"
+              v-permission="'activity:update_status'"
             >
               {{ scope.row.status === 1 ? '停止报名' : '开放报名' }}
             </el-button>
-            <el-button size="small" type="danger" @click="deleteActivity(scope.row)" v-if="scope.row.status === 0">删除</el-button>
+            <el-button size="small" type="danger" @click="deleteActivity(scope.row)" v-if="scope.row.status === 0" v-permission="'activity:delete'">删除</el-button>
           </template>
         </el-table-column>
       </el-table>

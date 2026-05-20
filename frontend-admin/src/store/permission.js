@@ -13,6 +13,7 @@ const componentMap = {
   'backend-users': () => import('../views/BackendUserList.vue'),
   'roles': () => import('../views/RoleList.vue'),
   'menus': () => import('../views/MenuList.vue'),
+  'operation-logs': () => import('../views/system/OperationLogList.vue'),
   'change-password': () => import('../views/ChangePassword.vue'),
   'system-configs': () => import('../views/system/SystemConfig.vue'),
   'activities': () => import('../views/business/ActivityList.vue'),
@@ -65,7 +66,7 @@ export const usePermissionStore = defineStore('permission', () => {
             routes.push({
               path: routePath,
               component,
-              meta: { title: item.name, icon: item.icon }
+              meta: { title: item.title || item.name, icon: item.icon }
             })
           }
         }

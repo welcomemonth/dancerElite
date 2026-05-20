@@ -3,7 +3,7 @@
     <template #header>
       <div style="display: flex; justify-content: space-between; align-items: center">
         <span>{{ config.display_name || '数据管理' }}</span>
-        <el-button type="primary" @click="openForm()">新增</el-button>
+        <el-button type="primary" @click="openForm()" v-permission="crudPermission('create')">新增</el-button>
       </div>
     </template>
 
@@ -60,8 +60,8 @@
       </el-table-column>
       <el-table-column label="操作" fixed="right" width="160">
         <template #default="{ row }">
-          <el-button size="small" @click="openForm(row)">编辑</el-button>
-          <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+          <el-button size="small" @click="openForm(row)" v-permission="crudPermission('update')">编辑</el-button>
+          <el-button size="small" type="danger" @click="handleDelete(row)" v-permission="crudPermission('delete')">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -150,7 +150,7 @@
       </el-form>
       <template #footer>
         <el-button @click="formVisible = false">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="handleSave">保存</el-button>
+        <el-button type="primary" :loading="saving" @click="handleSave" v-permission="crudPermission(editingId ? 'update' : 'create')">保存</el-button>
       </template>
     </el-dialog>
   </el-card>
@@ -169,6 +169,18 @@ const routeName = computed(() => {
   const path = route.path.replace(/^\/admin\//, '')
   return path
 })
+
+const permissionModule = computed(() => {
+  let module = routeName.value
+  if (module.endsWith('ies')) {
+    module = module.slice(0, -3) + 'y'
+  } else if (module.endsWith('s')) {
+    module = module.slice(0, -1)
+  }
+  return module.replace(/-/g, '_')
+})
+
+const crudPermission = (action) => `${permissionModule.value}:${action}`
 
 // API 基础路径
 const apiBase = computed(() => `/api/admin/${routeName.value}/`)

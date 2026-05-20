@@ -4,7 +4,7 @@
       <template #header>
         <div class="card-header">
           <span>角色管理</span>
-          <el-button type="primary" @click="showCreateDialog = true">
+          <el-button type="primary" @click="showCreateDialog = true" v-permission="'role:create'">
             <el-icon><Plus /></el-icon>
             新增角色
           </el-button>
@@ -30,12 +30,13 @@
         </el-table-column>
         <el-table-column label="操作" width="300">
           <template #default="scope">
-            <el-button size="small" @click="editRole(scope.row)">编辑</el-button>
-            <el-button size="small" type="warning" @click="managePermissions(scope.row)">权限</el-button>
+            <el-button size="small" @click="editRole(scope.row)" v-permission="'role:update'">编辑</el-button>
+            <el-button size="small" type="warning" @click="managePermissions(scope.row)" v-permission="'role:menus'">权限</el-button>
             <el-button 
               size="small" 
               :type="scope.row.status === 1 ? 'warning' : 'success'"
               @click="toggleRoleStatus(scope.row)"
+              v-permission="'role:update_status'"
             >
               {{ scope.row.status === 1 ? '禁用' : '启用' }}
             </el-button>
@@ -43,6 +44,7 @@
               size="small" 
               type="danger" 
               @click="deleteRole(scope.row)"
+              v-permission="'role:delete'"
             >
               删除
             </el-button>
@@ -82,7 +84,7 @@
       </el-form>
       <template #footer>
         <el-button @click="showCreateDialog = false">取消</el-button>
-        <el-button type="primary" @click="createRole" :loading="createLoading">确定</el-button>
+        <el-button type="primary" @click="createRole" :loading="createLoading" v-permission="'role:create'">确定</el-button>
       </template>
     </el-dialog>
 
@@ -106,35 +108,54 @@
       </el-form>
       <template #footer>
         <el-button @click="showEditDialog = false">取消</el-button>
-        <el-button type="primary" @click="updateRole" :loading="editLoading">确定</el-button>
+        <el-button type="primary" @click="updateRole" :loading="editLoading" v-permission="'role:update'">确定</el-button>
       </template>
     </el-dialog>
 
     <!-- 权限管理对话框 -->
-    <el-dialog v-model="showPermissionDialog" title="权限管理" width="600px">
+    <el-dialog v-model="showPermissionDialog" title="权限管理" width="820px">
       <div class="permission-content">
-        <h4>为角色 "{{ selectedRole?.display_name }}" 分配菜单权限</h4>
+        <div class="permission-header">
+          <h4>为角色 "{{ selectedRole?.display_name }}" 分配菜单和按钮权限</h4>
+          <div class="permission-actions">
+            <el-button size="small" @click="checkAllPermissions">全选展示</el-button>
+            <el-button size="small" @click="clearPermissions">全部隐藏</el-button>
+          </div>
+        </div>
         <el-tree
           ref="menuTreeRef"
-          :data="menuTree"
+          :data="permissionTree"
           :props="treeProps"
           show-checkbox
           node-key="id"
-          :default-checked-keys="checkedMenus"
-          :check-strictly="false"
-          class="menu-tree"
-        />
+          default-expand-all
+          :check-strictly="true"
+          :expand-on-click-node="false"
+          class="permission-tree"
+          @check-change="handlePermissionCheckChange"
+        >
+          <template #default="{ data }">
+            <span class="permission-node">
+              <span class="permission-title">{{ data.title }}</span>
+              <el-tag v-if="data.id !== 0" size="small" :type="typeTag(data.type)">
+                {{ typeText(data.type) }}
+              </el-tag>
+              <span v-if="data.permission" class="permission-code">{{ data.permission }}</span>
+              <span v-if="data.method" class="permission-method">{{ data.method }}</span>
+            </span>
+          </template>
+        </el-tree>
       </div>
       <template #footer>
         <el-button @click="showPermissionDialog = false">取消</el-button>
-        <el-button type="primary" @click="savePermissions" :loading="permissionLoading">保存</el-button>
+        <el-button type="primary" @click="savePermissions" :loading="permissionLoading" v-permission="'role:update_menus'">保存</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed, nextTick, ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { roleApi, menuApi } from '../api'
@@ -151,6 +172,7 @@ const showPermissionDialog = ref(false)
 const selectedRole = ref(null)
 const checkedMenus = ref([])
 const menuTreeRef = ref()
+const syncingPermissionTree = ref(false)
 
 const pagination = ref({
   page: 1,
@@ -184,15 +206,19 @@ const formRules = {
   ]
 }
 
+onMounted(() => {
+  fetchRoles()
+  fetchMenuTree()
+})
+
 const treeProps = {
   children: 'children',
   label: 'title'
 }
 
-onMounted(() => {
-  fetchRoles()
-  fetchMenuTree()
-})
+const permissionTree = computed(() => [
+  { id: 0, title: '全部权限', type: 0, children: menuTree.value }
+])
 
 const fetchRoles = async () => {
   loading.value = true
@@ -216,6 +242,75 @@ const fetchMenuTree = async () => {
   } catch (error) {
     ElMessage.error('获取菜单列表失败')
   }
+}
+
+const collectMenuIDs = (nodes) => {
+  const ids = []
+  const walk = (items) => {
+    for (const item of items) {
+      if (item.id !== 0) ids.push(item.id)
+      if (item.children?.length) walk(item.children)
+    }
+  }
+  walk(nodes)
+  return ids
+}
+
+const collectDescendantIDs = (node) => {
+  return collectMenuIDs(node.children || [])
+}
+
+const findAncestorIDs = (nodes, targetID, ancestors = []) => {
+  for (const node of nodes) {
+    if (node.id === targetID) return ancestors
+    const found = findAncestorIDs(node.children || [], targetID, [...ancestors, node.id])
+    if (found) return found
+  }
+  return null
+}
+
+const setTreeCheckedKeys = async (keys) => {
+  syncingPermissionTree.value = true
+  await nextTick()
+  menuTreeRef.value?.setCheckedKeys(keys)
+  await nextTick()
+  syncingPermissionTree.value = false
+}
+
+const handlePermissionCheckChange = (node, checked) => {
+  if (syncingPermissionTree.value) return
+
+  syncingPermissionTree.value = true
+  try {
+    if (node.id === 0) {
+      menuTreeRef.value?.setCheckedKeys(checked ? collectMenuIDs(menuTree.value) : [])
+      return
+    }
+
+    if (checked) {
+      const ancestorIDs = findAncestorIDs(permissionTree.value, node.id) || []
+      for (const id of ancestorIDs.filter(id => id !== 0)) {
+        menuTreeRef.value?.setChecked(id, true, false)
+      }
+      return
+    }
+
+    for (const id of collectDescendantIDs(node)) {
+      menuTreeRef.value?.setChecked(id, false, false)
+    }
+  } finally {
+    nextTick(() => {
+      syncingPermissionTree.value = false
+    })
+  }
+}
+
+const checkAllPermissions = () => {
+  setTreeCheckedKeys(collectMenuIDs(menuTree.value))
+}
+
+const clearPermissions = () => {
+  setTreeCheckedKeys([])
 }
 
 const createRole = async () => {
@@ -327,11 +422,15 @@ const deleteRole = async (role) => {
 const managePermissions = async (role) => {
   selectedRole.value = role
   showPermissionDialog.value = true
+  if (menuTree.value.length === 0) {
+    await fetchMenuTree()
+  }
   
   // 获取当前角色的菜单权限
   try {
     const data = await roleApi.getMenus(role.id)
     checkedMenus.value = data.menu_ids || []
+    await setTreeCheckedKeys(checkedMenus.value)
   } catch (error) {
     ElMessage.error('获取角色权限失败')
   }
@@ -339,14 +438,17 @@ const managePermissions = async (role) => {
 
 const savePermissions = async () => {
   if (!selectedRole.value) return
-  
-  const checkedKeys = menuTreeRef.value.getCheckedKeys()
-  const halfCheckedKeys = menuTreeRef.value.getHalfCheckedKeys()
-  const allCheckedKeys = [...checkedKeys, ...halfCheckedKeys]
+
+  const checkedKeys = menuTreeRef.value?.getCheckedKeys() || []
+  const menuIDs = new Set(checkedKeys.filter(id => id !== 0))
+  for (const id of checkedKeys) {
+    const ancestorIDs = findAncestorIDs(permissionTree.value, id) || []
+    ancestorIDs.filter(id => id !== 0).forEach(id => menuIDs.add(id))
+  }
   
   permissionLoading.value = true
   try {
-    await roleApi.updateMenus(selectedRole.value.id, { menu_ids: allCheckedKeys })
+    await roleApi.updateMenus(selectedRole.value.id, { menu_ids: Array.from(menuIDs) })
     ElMessage.success('权限保存成功')
     showPermissionDialog.value = false
   } catch (error) {
@@ -358,6 +460,16 @@ const savePermissions = async () => {
 
 const formatDate = (dateString) => {
   return new Date(dateString).toLocaleString('zh-CN')
+}
+
+const typeText = (type) => {
+  const map = { 1: '目录', 2: '菜单', 3: '按钮/API' }
+  return map[type] || '全部'
+}
+
+const typeTag = (type) => {
+  const map = { 1: 'primary', 2: 'success', 3: 'warning' }
+  return map[type] || 'info'
 }
 </script>
 
@@ -382,16 +494,54 @@ const formatDate = (dateString) => {
   padding: 20px 0;
 }
 
-.menu-tree {
+.permission-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.permission-header h4 {
+  margin: 0;
+  color: #303133;
+}
+
+.permission-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.permission-tree {
   border: 1px solid #dcdfe6;
   border-radius: 4px;
   padding: 10px;
-  max-height: 400px;
+  max-height: 460px;
   overflow-y: auto;
 }
 
-.permission-content h4 {
-  margin-bottom: 15px;
-  color: #303133;
+.permission-node {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.permission-title {
+  font-weight: 500;
+}
+
+.permission-code {
+  color: #909399;
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.permission-method {
+  color: #606266;
+  background: #f4f4f5;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 12px;
 }
 </style> 

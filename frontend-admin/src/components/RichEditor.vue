@@ -4,6 +4,7 @@
       v-model="content"
       :init="editorInit"
       :disabled="disabled"
+      license-key="gpl"
     />
   </div>
 </template>
@@ -49,12 +50,14 @@ const content = computed({
   set: (val) => emit('update:modelValue', val)
 })
 
+const publicAsset = (assetPath) => `${import.meta.env.BASE_URL}${assetPath.replace(/^\//, '')}`
+
 const editorInit = {
   height: props.height,
-  language_url: '/tinymce/langs/zh_CN.js',
+  language_url: publicAsset('tinymce/langs/zh_CN.js'),
   language: 'zh_CN',
-  skin_url: '/tinymce/skins/ui/oxide',
-  content_css: '/tinymce/skins/content/default/content.min.css',
+  skin_url: publicAsset('tinymce/skins/ui/oxide'),
+  content_css: publicAsset('tinymce/skins/content/default/content.min.css'),
   plugins: [
     'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
     'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',

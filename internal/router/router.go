@@ -1,6 +1,8 @@
 package router
 
 import (
+	"net/http"
+	"path"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -10,6 +12,7 @@ import (
 	"github.com/zzhtl/go-mountain/internal/handler"
 	"github.com/zzhtl/go-mountain/internal/middleware"
 	"github.com/zzhtl/go-mountain/internal/service"
+	"github.com/zzhtl/go-mountain/internal/web"
 )
 
 // Setup 配置所有路由
@@ -44,6 +47,7 @@ func Setup(engine *gin.Engine, db *gorm.DB, cfg *config.Config) {
 	systemConfigSvc := service.NewSystemConfigService(db)
 	paymentSvc := service.NewPaymentService(db, systemConfigSvc)
 	codegenSvc := service.NewCodegenService(db)
+	operationLogSvc := service.NewOperationLogService(db)
 
 	// 创建 handlers
 	authHandler := handler.NewAuthHandler(authSvc)
@@ -59,6 +63,7 @@ func Setup(engine *gin.Engine, db *gorm.DB, cfg *config.Config) {
 	paymentHandler := handler.NewPaymentHandler(paymentSvc)
 	systemConfigHandler := handler.NewSystemConfigHandler(systemConfigSvc)
 	codegenHandler := handler.NewCodegenHandler(codegenSvc)
+	operationLogHandler := handler.NewOperationLogHandler(operationLogSvc)
 
 	// ==================== 小程序 API ====================
 	mp := api.Group("/mp")
@@ -109,6 +114,7 @@ func Setup(engine *gin.Engine, db *gorm.DB, cfg *config.Config) {
 	adminAuth := admin.Group("")
 	adminAuth.Use(middleware.JWTAuth(cfg.JWT.Secret))
 	adminAuth.Use(middleware.RBACAuth(db))
+	adminAuth.Use(middleware.OperationLogger(db))
 	{
 		// 修改密码
 		adminAuth.PUT("/backend-auth/change-password", authHandler.ChangePassword)
@@ -169,6 +175,10 @@ func Setup(engine *gin.Engine, db *gorm.DB, cfg *config.Config) {
 		menus.DELETE("/:id", menuHandler.Delete)
 		menus.PUT("/:id/status", menuHandler.UpdateStatus)
 
+		// 操作日志
+		operationLogs := adminAuth.Group("/operation-logs")
+		operationLogs.GET("/", operationLogHandler.List)
+
 		// 活动管理
 		activities := adminAuth.Group("/activities")
 		activities.GET("/", activityHandler.List)
@@ -215,20 +225,60 @@ func Setup(engine *gin.Engine, db *gorm.DB, cfg *config.Config) {
 		upload.POST("/video", uploadHandler.UploadVideo)
 	}
 
+	setupAdminUI(engine)
+}
+
+func setupAdminUI(engine *gin.Engine) {
+	adminFS := http.FS(web.Dist())
+
 	// Admin UI 静态文件
-	engine.StaticFS("/web", gin.Dir("frontend-admin/dist", false))
+	engine.GET("/web", func(c *gin.Context) { c.Redirect(http.StatusFound, "/web/") })
+	engine.GET("/web/*filepath", func(c *gin.Context) {
+		filePath := strings.TrimPrefix(c.Param("filepath"), "/")
+		if filePath == "" {
+			filePath = "index.html"
+		}
+		if serveEmbeddedFile(c, adminFS, filePath) {
+			return
+		}
+		if path.Ext(filePath) == "" {
+			serveEmbeddedFile(c, adminFS, "index.html")
+			return
+		}
+		c.JSON(http.StatusNotFound, gin.H{"code": 404, "message": "Not found"})
+	})
 
 	// SPA 回退
 	engine.NoRoute(func(c *gin.Context) {
-		path := c.Request.URL.Path
-		if strings.HasPrefix(path, "/web/") {
-			c.File("frontend-admin/dist/index.html")
+		if strings.HasPrefix(c.Request.URL.Path, "/web/") {
+			serveEmbeddedFile(c, adminFS, "index.html")
 			return
 		}
-		c.JSON(404, gin.H{"code": 404, "message": "Not found"})
+		c.JSON(http.StatusNotFound, gin.H{"code": 404, "message": "Not found"})
 	})
 
 	// 重定向
-	engine.GET("/admin", func(c *gin.Context) { c.Redirect(302, "/web/") })
-	engine.GET("/admin/", func(c *gin.Context) { c.Redirect(302, "/web/") })
+	engine.GET("/admin", func(c *gin.Context) { c.Redirect(http.StatusFound, "/web/") })
+	engine.GET("/admin/", func(c *gin.Context) { c.Redirect(http.StatusFound, "/web/") })
+}
+
+func serveEmbeddedFile(c *gin.Context, fileSystem http.FileSystem, filePath string) bool {
+	cleanPath := strings.TrimPrefix(path.Clean("/"+filePath), "/")
+	if cleanPath == "." || cleanPath == "" {
+		cleanPath = "index.html"
+	}
+
+	file, err := fileSystem.Open(cleanPath)
+	if err != nil {
+		return false
+	}
+	defer file.Close()
+
+	stat, err := file.Stat()
+	if err != nil || stat.IsDir() {
+		return false
+	}
+
+	http.ServeContent(c.Writer, c.Request, stat.Name(), stat.ModTime(), file)
+	return true
 }

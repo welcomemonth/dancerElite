@@ -60,6 +60,11 @@ export const menuApi = {
   updateStatus: (id, data) => request.put(`/api/admin/menus/${id}/status`, data)
 }
 
+// ==================== 操作日志 ====================
+export const operationLogApi = {
+  list: params => request.get('/api/admin/operation-logs/', { params })
+}
+
 // ==================== 活动管理 ====================
 export const activityApi = {
   list: params => request.get('/api/admin/activities/', { params }),

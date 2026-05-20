@@ -18,6 +18,7 @@ Go Mountain 是一套基于 Go + Vue 3 的小程序快速开发平台，提供�
 | 富文本 | TinyMCE 8 |
 | 构建工具 | Vite 6 |
 | 配置管理 | Viper（YAML + 环境变量） |
+| 前端打包 | Go embed（管理后台静态资源内嵌到 Go 二进制） |
 
 ## 项目结构
 
@@ -38,6 +39,7 @@ go-mountain/
 │   ├── service/                # 业务逻辑层
 │   ├── model/                  # 数据模型
 │   ├── repository/             # 泛型 Repository（BaseRepo[T]）
+│   ├── web/                    # 嵌入式管理后台静态资源
 │   └── pkg/                    # 公共工具（response、crypto、errcode）
 ├── frontend-admin/             # Vue 3 管理后台
 │   ├── src/
@@ -50,6 +52,8 @@ go-mountain/
 │   ├── public/tinymce/         # TinyMCE 自托管资源
 │   └── package.json
 ├── frontend-mp/                # 微信小程序（uni-app）
+├── scripts/
+│   └── deploy.sh               # 一键本机部署脚本
 ├── uploads/                    # 上传文件目录
 ├── Makefile                    # 构建命令
 └── go.mod
@@ -58,7 +62,7 @@ go-mountain/
 ## 环境要求
 
 - Go 1.21+
-- Node.js 18+
+- Bun 1.0+（管理后台前端构建）
 - PostgreSQL 14+（生产环境）或 SQLite（开发/测试）
 
 ## 快速开始
@@ -76,7 +80,7 @@ cd go-mountain
 make install
 # 等同于：
 # go mod tidy
-# cd frontend-admin && npm install
+# cd frontend-admin && bun install
 ```
 
 ### 3. 配置
@@ -122,13 +126,13 @@ make migrate
 - 自动创建所有数据表
 - 初始化默认角色（管理员、编辑员、查看者）
 - 初始化默认菜单结构
-- 创建 admin 账号并输出随机密码
+- 创建默认 admin 账号
 
 ```
 ========================================
 管理员账号创建成功
 用户名: admin
-密码: xK9mP2qR7w
+密码: admin@123
 请妥善保管密码！
 ========================================
 ```
@@ -138,6 +142,8 @@ make migrate
 ```bash
 make frontend-admin
 ```
+
+此命令会把管理后台构建到 `internal/web/dist`，后端编译时会将该目录嵌入 Go 二进制。该目录只是构建暂存目录，真实构建产物不提交到仓库。
 
 ### 6. 启动服务
 
@@ -151,6 +157,8 @@ make build
 ```
 
 访问管理后台：http://localhost:8080/web/
+
+管理后台默认使用中文界面，Element Plus 组件、菜单标题和 TinyMCE 语言包均按中文加载。
 
 ## 核心功能
 
@@ -186,7 +194,7 @@ make build
 
 核心商业化功能，根据数据库表自动生成管理后台 CRUD 代码：
 
-1. **选择数据表**：自动读取 PostgreSQL 表结构（列名、类型、注释）
+1. **选择数据表**：自动读取 PostgreSQL / SQLite 表结构（列名、类型、注释；SQLite 无表/字段注释）
 2. **配置字段**：设置每个字段的显示名称、表单类型（文本框/数字/下拉框/日期/图片上传/富文本/开关等）、是否列表显示、可搜索、必填
 3. **预览代码**：预览将要生成的 Go Model、Service、Handler 代码
 4. **一键生成**：
@@ -250,25 +258,63 @@ make build
 
 ## 生产部署
 
-### 方式一：二进制部署
+### 方式一：一键本机部署
+
+仓库提供 `scripts/deploy.sh`，会自动完成前端构建、Go 二进制构建、配置生成、数据库迁移、服务启动和健康检查。
+
+```bash
+make deploy
+```
+
+默认部署到 `./deploy`，监听 `8080`，使用 SQLite：
+
+```text
+deploy/
+├── bin/go-mountain
+├── bin/go-mountain-migrate
+├── configs/config.yaml
+├── data.db
+├── logs/go-mountain.log
+├── go-mountain.pid
+└── uploads/
+```
+
+可通过环境变量覆盖部署参数：
+
+```bash
+DEPLOY_DIR=/opt/go-mountain \
+PORT=8080 \
+DATABASE_DRIVER=postgres \
+DATABASE_DSN="host=127.0.0.1 user=postgres password=xxx dbname=go_mountain port=5432 sslmode=disable" \
+JWT_SECRET="your-production-secret-at-least-32-chars" \
+make deploy
+```
+
+部署完成后访问 `http://127.0.0.1:8080/web/`。如需停止：
+
+```bash
+kill "$(cat deploy/go-mountain.pid)"
+```
+
+### 方式二：二进制部署
 
 ```bash
 # 构建
 make build
-make frontend-admin
 
 # 部署目录结构
 deploy/
 ├── bin/go-mountain          # 后端二进制
 ├── configs/config.yaml      # 配置文件
-├── frontend-admin/dist/     # 前端构建产物
 └── uploads/                 # 上传文件目录
 
 # 启动
 cd deploy && ./bin/go-mountain
 ```
 
-### 方式二：systemd 服务
+管理后台前端已经嵌入 `bin/go-mountain`，部署时不需要再单独携带 `frontend-admin/dist`。
+
+### 方式三：systemd 服务
 
 创建 `/etc/systemd/system/go-mountain.service`：
 
@@ -298,26 +344,27 @@ sudo systemctl enable go-mountain
 sudo systemctl start go-mountain
 ```
 
-### 方式三：Docker 部署
+### 方式四：Docker 部署
 
 创建 `Dockerfile`：
 
 ```dockerfile
 # 构建后端
-FROM golang:1.21-alpine AS backend
+FROM oven/bun:1-alpine AS frontend
+WORKDIR /app/frontend-admin
+COPY frontend-admin/package.json ./
+RUN bun install
+COPY frontend-admin/ .
+COPY internal/web/ /app/internal/web/
+RUN bun run build
+
+FROM golang:1.25-alpine AS backend
 WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
+COPY --from=frontend /app/internal/web/dist ./internal/web/dist
 RUN CGO_ENABLED=0 go build -o bin/go-mountain cmd/server/main.go
-
-# 构建前端
-FROM node:18-alpine AS frontend
-WORKDIR /app/frontend-admin
-COPY frontend-admin/package*.json ./
-RUN npm ci
-COPY frontend-admin/ .
-RUN npm run build
 
 # 最终镜像
 FROM alpine:3.19
@@ -325,7 +372,6 @@ RUN apk add --no-cache ca-certificates tzdata
 ENV TZ=Asia/Shanghai
 WORKDIR /app
 COPY --from=backend /app/bin/go-mountain .
-COPY --from=frontend /app/frontend-admin/dist ./frontend-admin/dist
 COPY configs/ ./configs/
 RUN mkdir -p uploads
 EXPOSE 8080
@@ -366,11 +412,12 @@ server {
 | 命令 | 说明 |
 | --- | --- |
 | `make help` | 显示可用命令 |
-| `make install` | 安装所有依赖（Go + npm） |
+| `make install` | 安装所有依赖（Go + bun） |
 | `make migrate` | 数据库迁移 + 初始化默认数据 + 创建管理员 |
 | `make run` | 开发模式运行 |
-| `make build` | 构建生产二进制到 `bin/go-mountain` |
-| `make frontend-admin` | 构建管理后台前端 |
+| `make build` | 构建管理后台前端并打包生产二进制到 `bin/go-mountain` |
+| `make frontend-admin` | 构建管理后台前端到 `internal/web/dist` |
+| `make deploy` | 一键构建、迁移并启动本机部署 |
 | `make clean` | 清理构建产物 |
 
 ## 代码生成器使用指南

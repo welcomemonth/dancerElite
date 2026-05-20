@@ -1,4 +1,4 @@
-.PHONY: run build clean migrate frontend-admin help dev install
+.PHONY: run build clean migrate frontend-admin help dev install deploy
 
 # 默认目标
 help:
@@ -10,14 +10,16 @@ help:
 	@echo "  clean            - 清理构建文件"
 	@echo "  dev              - 开发环境启动"
 	@echo "  install          - 安装所有依赖"
+	@echo "  deploy           - 一键构建、迁移并启动本机部署"
 
 # 运行服务器
 run:
 	@echo "启动服务器..."
+	$(MAKE) frontend-admin
 	go run cmd/server/main.go
 
 # 构建项目
-build:
+build: frontend-admin
 	@echo "构建项目..."
 	go build -o bin/go-mountain cmd/server/main.go
 
@@ -29,16 +31,20 @@ migrate:
 # 构建管理后台前端
 frontend-admin:
 	@echo "构建管理后台前端..."
-	cd frontend-admin && npm run build
+	cd frontend-admin && bun run build
+	@touch internal/web/dist/.gitkeep
 
 # 清理构建文件
 clean:
 	@echo "清理构建文件..."
 	rm -rf bin/
 	rm -rf frontend-admin/dist/
+	rm -rf internal/web/dist/*
+	@mkdir -p internal/web/dist
+	@touch internal/web/dist/.gitkeep
 
 # 开发环境启动
-dev:
+dev: frontend-admin
 	@echo "启动开发环境..."
 	go run cmd/server/main.go
 
@@ -47,4 +53,9 @@ install:
 	@echo "安装Go依赖..."
 	go mod tidy
 	@echo "安装前端依赖..."
-	cd frontend-admin && npm install
+	cd frontend-admin && bun install
+
+# 一键本机部署
+deploy:
+	@echo "执行一键部署..."
+	bash scripts/deploy.sh

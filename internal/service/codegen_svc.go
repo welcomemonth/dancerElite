@@ -40,44 +40,58 @@ type TableInfo struct {
 
 // ColumnInfo 数据库列信息
 type ColumnInfo struct {
-	Field      string `json:"field"`
-	Type       string `json:"type"`
-	Nullable   bool   `json:"nullable"`
-	Default    string `json:"default"`
-	Comment    string `json:"comment"`
-	IsPrimary  bool   `json:"is_primary"`
-	GoField    string `json:"go_field"`
-	GoType     string `json:"go_type"`
-	JsonTag    string `json:"json_tag"`
-	FormType   string `json:"form_type"`
+	Field     string `json:"field"`
+	Type      string `json:"type"`
+	Nullable  bool   `json:"nullable"`
+	Default   string `json:"default"`
+	Comment   string `json:"comment"`
+	IsPrimary bool   `json:"is_primary"`
+	GoField   string `json:"go_field"`
+	GoType    string `json:"go_type"`
+	JsonTag   string `json:"json_tag"`
+	FormType  string `json:"form_type"`
 }
 
 // GeneratedCode 生成的代码
 type GeneratedCode struct {
-	ModelCode    string `json:"model_code"`
-	ServiceCode  string `json:"service_code"`
-	HandlerCode  string `json:"handler_code"`
-	RouterCode   string `json:"router_code"`
-	APICode      string `json:"api_code"`
+	ModelCode   string `json:"model_code"`
+	ServiceCode string `json:"service_code"`
+	HandlerCode string `json:"handler_code"`
+	RouterCode  string `json:"router_code"`
+	APICode     string `json:"api_code"`
 }
 
 // 需要排除的系统表
 var systemTables = map[string]bool{
 	"schema_migrations": true,
+	"sqlite_sequence":   true,
 }
 
 // GetTables 获取所有用户表
 func (s *CodegenService) GetTables(ctx context.Context) ([]TableInfo, error) {
 	var tables []TableInfo
-	err := s.db.WithContext(ctx).Raw(`
-		SELECT c.relname AS table_name,
-		       COALESCE(pg_catalog.obj_description(c.oid, 'pg_class'), '') AS comment
-		FROM pg_catalog.pg_class c
-		JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
-		WHERE c.relkind = 'r'
-		  AND n.nspname = 'public'
-		ORDER BY c.relname
-	`).Scan(&tables).Error
+
+	var err error
+	switch s.db.Dialector.Name() {
+	case "sqlite":
+		err = s.db.WithContext(ctx).Raw(`
+			SELECT name AS table_name, '' AS comment
+			FROM sqlite_master
+			WHERE type = 'table'
+			  AND name NOT LIKE 'sqlite_%'
+			ORDER BY name
+		`).Scan(&tables).Error
+	default:
+		err = s.db.WithContext(ctx).Raw(`
+			SELECT c.relname AS table_name,
+			       COALESCE(pg_catalog.obj_description(c.oid, 'pg_class'), '') AS comment
+			FROM pg_catalog.pg_class c
+			JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+			WHERE c.relkind = 'r'
+			  AND n.nspname = 'public'
+			ORDER BY c.relname
+		`).Scan(&tables).Error
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -95,29 +109,55 @@ func (s *CodegenService) GetTables(ctx context.Context) ([]TableInfo, error) {
 // GetTableColumns 获取表的列信息
 func (s *CodegenService) GetTableColumns(ctx context.Context, tableName string) ([]ColumnInfo, error) {
 	var columns []ColumnInfo
-	err := s.db.WithContext(ctx).Raw(`
-		SELECT
-			c.column_name AS field,
-			c.data_type AS type,
-			(c.is_nullable = 'YES') AS nullable,
-			COALESCE(c.column_default, '') AS "default",
-			COALESCE(pgd.description, '') AS comment,
-			COALESCE(tc.constraint_type = 'PRIMARY KEY', false) AS is_primary
-		FROM information_schema.columns c
-		LEFT JOIN pg_catalog.pg_statio_all_tables st
-			ON st.schemaname = c.table_schema AND st.relname = c.table_name
-		LEFT JOIN pg_catalog.pg_description pgd
-			ON pgd.objoid = st.relid AND pgd.objsubid = c.ordinal_position
-		LEFT JOIN information_schema.key_column_usage kcu
-			ON kcu.table_schema = c.table_schema
-			AND kcu.table_name = c.table_name
-			AND kcu.column_name = c.column_name
-		LEFT JOIN information_schema.table_constraints tc
-			ON tc.constraint_name = kcu.constraint_name
-			AND tc.constraint_type = 'PRIMARY KEY'
-		WHERE c.table_schema = 'public' AND c.table_name = ?
-		ORDER BY c.ordinal_position
-	`, tableName).Scan(&columns).Error
+
+	var err error
+	switch s.db.Dialector.Name() {
+	case "sqlite":
+		var sqliteColumns []struct {
+			Name       string `gorm:"column:name"`
+			Type       string `gorm:"column:type"`
+			NotNull    int    `gorm:"column:notnull"`
+			DefaultVal string `gorm:"column:dflt_value"`
+			PrimaryKey int    `gorm:"column:pk"`
+		}
+		err = s.db.WithContext(ctx).
+			Raw(fmt.Sprintf("PRAGMA table_info(%s)", quoteSQLiteIdentifier(tableName))).
+			Scan(&sqliteColumns).Error
+		for _, col := range sqliteColumns {
+			columns = append(columns, ColumnInfo{
+				Field:     col.Name,
+				Type:      col.Type,
+				Nullable:  col.NotNull == 0,
+				Default:   col.DefaultVal,
+				Comment:   "",
+				IsPrimary: col.PrimaryKey > 0,
+			})
+		}
+	default:
+		err = s.db.WithContext(ctx).Raw(`
+			SELECT
+				c.column_name AS field,
+				c.data_type AS type,
+				(c.is_nullable = 'YES') AS nullable,
+				COALESCE(c.column_default, '') AS "default",
+				COALESCE(pgd.description, '') AS comment,
+				COALESCE(tc.constraint_type = 'PRIMARY KEY', false) AS is_primary
+			FROM information_schema.columns c
+			LEFT JOIN pg_catalog.pg_statio_all_tables st
+				ON st.schemaname = c.table_schema AND st.relname = c.table_name
+			LEFT JOIN pg_catalog.pg_description pgd
+				ON pgd.objoid = st.relid AND pgd.objsubid = c.ordinal_position
+			LEFT JOIN information_schema.key_column_usage kcu
+				ON kcu.table_schema = c.table_schema
+				AND kcu.table_name = c.table_name
+				AND kcu.column_name = c.column_name
+			LEFT JOIN information_schema.table_constraints tc
+				ON tc.constraint_name = kcu.constraint_name
+				AND tc.constraint_type = 'PRIMARY KEY'
+			WHERE c.table_schema = 'public' AND c.table_name = ?
+			ORDER BY c.ordinal_position
+		`, tableName).Scan(&columns).Error
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -137,6 +177,10 @@ func (s *CodegenService) GetTableColumns(ctx context.Context, tableName string) 
 	}
 
 	return result, nil
+}
+
+func quoteSQLiteIdentifier(name string) string {
+	return `"` + strings.ReplaceAll(name, `"`, `""`) + `"`
 }
 
 // List 获取代码生成配置列表
@@ -191,8 +235,8 @@ func (s *CodegenService) Generate(ctx context.Context, id int64) (*GeneratedCode
 
 	// 写入文件
 	files := map[string]string{
-		fmt.Sprintf("internal/model/gen_%s.go", config.ModuleName):          code.ModelCode,
-		fmt.Sprintf("internal/service/gen_%s_svc.go", config.ModuleName):    code.ServiceCode,
+		fmt.Sprintf("internal/model/gen_%s.go", config.ModuleName):           code.ModelCode,
+		fmt.Sprintf("internal/service/gen_%s_svc.go", config.ModuleName):     code.ServiceCode,
 		fmt.Sprintf("internal/handler/gen_%s_handler.go", config.ModuleName): code.HandlerCode,
 	}
 
@@ -324,12 +368,12 @@ func (s *CodegenService) generateCode(config *model.CodegenConfig) (*GeneratedCo
 	}
 
 	data := &templateData{
-		TableName:    config.TblName,
-		ModuleName:   config.ModuleName,
-		DisplayName:  config.DisplayName,
-		StructName:   snakeToPascal(config.ModuleName),
-		RouteName:    strings.ReplaceAll(config.ModuleName, "_", "-"),
-		Columns:      columns,
+		TableName:     config.TblName,
+		ModuleName:    config.ModuleName,
+		DisplayName:   config.DisplayName,
+		StructName:    snakeToPascal(config.ModuleName),
+		RouteName:     strings.ReplaceAll(config.ModuleName, "_", "-"),
+		Columns:       columns,
 		HasSearch:     hasSearchable(columns),
 		SearchColumns: getSearchable(columns),
 	}

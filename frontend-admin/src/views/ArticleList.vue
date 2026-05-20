@@ -4,7 +4,7 @@
       <template #header>
         <div class="card-header">
           <span>文章管理</span>
-          <el-button type="primary" @click="createArticle">新增文章</el-button>
+          <el-button type="primary" @click="createArticle" v-permission="'article:create'">新增文章</el-button>
         </div>
       </template>
       
@@ -48,15 +48,16 @@
         </el-table-column>
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="scope">
-            <el-button size="small" @click="editArticle(scope.row.id)">编辑</el-button>
+            <el-button size="small" @click="editArticle(scope.row.id)" v-permission="'article:update'">编辑</el-button>
             <el-button 
               size="small" 
               :type="scope.row.status === 1 ? 'warning' : 'success'"
               @click="toggleStatus(scope.row)"
+              v-permission="'article:update_status'"
             >
               {{ scope.row.status === 1 ? '下架' : '发布' }}
             </el-button>
-            <el-button size="small" type="danger" @click="deleteArticle(scope.row)">删除</el-button>
+            <el-button size="small" type="danger" @click="deleteArticle(scope.row)" v-permission="'article:delete'">删除</el-button>
           </template>
         </el-table-column>
       </el-table>

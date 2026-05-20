@@ -45,7 +45,7 @@
         </el-table-column>
         <el-table-column label="操作" width="120">
           <template #default="scope">
-            <el-button size="small" @click="viewDetail(scope.row)">详情</el-button>
+            <el-button size="small" @click="viewDetail(scope.row)" v-permission="'registration:get'">详情</el-button>
           </template>
         </el-table-column>
       </el-table>

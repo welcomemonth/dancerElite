@@ -6,8 +6,8 @@
           <span>{{ isEdit ? '编辑文章' : '新增文章' }}</span>
           <div>
             <el-button @click="$router.back()">返回</el-button>
-            <el-button type="primary" @click="saveArticle(0)">保存草稿</el-button>
-            <el-button type="success" @click="saveArticle(1)">发布文章</el-button>
+            <el-button type="primary" @click="saveArticle(0)" v-permission="isEdit ? 'article:update' : 'article:create'">保存草稿</el-button>
+            <el-button type="success" @click="saveArticle(1)" v-permission="isEdit ? 'article:update' : 'article:create'">发布文章</el-button>
           </div>
         </div>
       </template>
@@ -44,7 +44,7 @@
               <img v-if="form.thumbnail" :src="form.thumbnail" class="thumbnail" />
               <el-icon v-else class="upload-icon"><Plus /></el-icon>
             </el-upload>
-            <el-button v-if="form.thumbnail" type="danger" size="small" @click="form.thumbnail = ''">删除</el-button>
+            <el-button v-if="form.thumbnail" type="danger" size="small" @click="form.thumbnail = ''" v-permission="isEdit ? 'article:update' : 'article:create'">删除</el-button>
           </div>
         </el-form-item>
 

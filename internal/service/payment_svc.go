@@ -101,7 +101,6 @@ func (s *PaymentService) List(ctx context.Context, page, pageSize int, status in
 	)
 
 	db := s.db.WithContext(ctx).Table("payments").
-		Select("payments.*").
 		Where("payments.deleted_at IS NULL")
 
 	if status >= 0 {
@@ -116,7 +115,7 @@ func (s *PaymentService) List(ctx context.Context, page, pageSize int, status in
 	}
 
 	offset := (page - 1) * pageSize
-	err := db.Order("payments.created_at DESC").Offset(offset).Limit(pageSize).Find(&list).Error
+	err := db.Select("payments.*").Order("payments.created_at DESC").Offset(offset).Limit(pageSize).Find(&list).Error
 	return list, total, err
 }
 

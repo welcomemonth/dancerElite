@@ -162,7 +162,7 @@
 
       <div style="text-align: right; margin-top: 24px">
         <el-button @click="step = 1">上一步</el-button>
-        <el-button type="primary" :loading="saving" @click="handleSave">
+        <el-button type="primary" :loading="saving" @click="handleSave" v-permission="isEdit ? 'codegen:update' : 'codegen:create'">
           {{ isEdit ? '保存配置' : '创建配置' }}
         </el-button>
       </div>

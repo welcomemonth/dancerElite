@@ -12,6 +12,8 @@ import (
 	"github.com/zzhtl/go-mountain/internal/service"
 )
 
+const defaultAdminPassword = "admin@123"
+
 func main() {
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -71,8 +73,7 @@ func main() {
 		if err := database.Where("name = ?", "admin").First(&adminRole).Error; err != nil {
 			log.Printf("未找到 admin 角色: %v", err)
 		} else {
-			password := service.GenerateRandomPassword(10)
-			hashedPassword, err := crypto.HashPassword(password)
+			hashedPassword, err := crypto.HashPassword(defaultAdminPassword)
 			if err != nil {
 				log.Fatalf("密码加密失败: %v", err)
 			}
@@ -93,7 +94,7 @@ func main() {
 			fmt.Println("========================================")
 			fmt.Printf("管理员账号创建成功\n")
 			fmt.Printf("用户名: admin\n")
-			fmt.Printf("密码: %s\n", password)
+			fmt.Printf("密码: %s\n", defaultAdminPassword)
 			fmt.Println("请妥善保管密码！")
 			fmt.Println("========================================")
 		}

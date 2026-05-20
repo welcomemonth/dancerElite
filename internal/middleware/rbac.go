@@ -32,6 +32,11 @@ func RBACAuth(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
+		if isSelfServicePath(c.FullPath()) {
+			c.Next()
+			return
+		}
+
 		// 获取 role_id
 		roleIDVal, exists := c.Get("role_id")
 		if !exists {
@@ -58,12 +63,24 @@ func RBACAuth(db *gorm.DB) gin.HandlerFunc {
 			Count(&count)
 
 		if count == 0 {
-			response.Forbidden(c, "无权限访问")
-			c.Abort()
-			return
+			if !hasReadonlyMenuAccess(db, roleID, c.FullPath(), c.Request.Method) {
+				response.Forbidden(c, "无权限访问")
+				c.Abort()
+				return
+			}
 		}
 
 		c.Next()
+	}
+}
+
+func isSelfServicePath(path string) bool {
+	switch path {
+	case "/api/admin/backend-users/current/menus",
+		"/api/admin/backend-auth/change-password":
+		return true
+	default:
+		return false
 	}
 }
 
@@ -104,6 +121,31 @@ func resolvePermission(path, method string) string {
 	action := resolveAction(parts, method)
 
 	return module + ":" + action
+}
+
+func hasReadonlyMenuAccess(db *gorm.DB, roleID int64, path, method string) bool {
+	if method != "GET" {
+		return false
+	}
+
+	path = strings.TrimPrefix(path, "/api/admin/")
+	parts := strings.Split(strings.Trim(path, "/"), "/")
+	if len(parts) == 0 || parts[0] == "" {
+		return false
+	}
+
+	action := resolveAction(parts, method)
+	if action != "list" && action != "get" {
+		return false
+	}
+
+	var count int64
+	db.Model(&model.RoleMenu{}).
+		Joins("INNER JOIN menus ON menus.id = role_menus.menu_id").
+		Where("role_menus.role_id = ? AND menus.path = ? AND menus.type = 2 AND menus.status = 1",
+			roleID, "/admin/"+parts[0]).
+		Count(&count)
+	return count > 0
 }
 
 // resolveAction 根据路径段和 HTTP 方法确定操作名

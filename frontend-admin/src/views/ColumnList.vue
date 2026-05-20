@@ -4,7 +4,7 @@
       <template #header>
         <div class="card-header">
           <span>栏目管理</span>
-          <el-button type="primary" @click="showDialog = true">新增栏目</el-button>
+          <el-button type="primary" @click="showDialog = true" v-permission="'column:create'">新增栏目</el-button>
         </div>
       </template>
       
@@ -20,8 +20,8 @@
         </el-table-column>
         <el-table-column label="操作" width="180">
           <template #default="scope">
-            <el-button size="small" @click="editColumn(scope.row)">编辑</el-button>
-            <el-button size="small" type="danger" @click="deleteColumn(scope.row)">删除</el-button>
+            <el-button size="small" @click="editColumn(scope.row)" v-permission="'column:update'">编辑</el-button>
+            <el-button size="small" type="danger" @click="deleteColumn(scope.row)" v-permission="'column:delete'">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -42,7 +42,7 @@
       </el-form>
       <template #footer>
         <el-button @click="showDialog = false">取消</el-button>
-        <el-button type="primary" @click="saveColumn">保存</el-button>
+        <el-button type="primary" @click="saveColumn" v-permission="editingColumn ? 'column:update' : 'column:create'">保存</el-button>
       </template>
     </el-dialog>
   </div>

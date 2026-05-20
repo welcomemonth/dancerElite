@@ -1,7 +1,14 @@
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: "Inter", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   line-height: 1.5;
   font-weight: 400;
+  --el-color-primary: #0f766e;
+  --el-color-primary-light-3: #159487;
+  --el-color-primary-light-5: #45aaa0;
+  --el-color-primary-light-7: #8bd2ca;
+  --el-color-primary-light-8: #b7e4df;
+  --el-color-primary-light-9: #e6f4f1;
+  --el-color-primary-dark-2: #0b5f58;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -28,6 +35,11 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background: #f5f7f6;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 h1 {
@@ -50,4 +62,66 @@ button {
 #app {
   width: 100%;
   height: 100%;
+}
+
+.el-card {
+  border-radius: 8px;
+  border-color: #e5e7eb;
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.05);
+}
+
+.el-card__header {
+  padding: 16px 18px;
+  border-bottom-color: #edf0f2;
+  font-weight: 600;
+}
+
+.el-card__body {
+  padding: 18px;
+}
+
+.el-table {
+  --el-table-header-bg-color: #f8faf9;
+  --el-table-header-text-color: #374151;
+  border-radius: 6px;
+}
+
+.el-button {
+  border-radius: 6px;
+}
+
+.el-tag {
+  border-radius: 6px;
+}
+
+.card-header,
+.toolbar,
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.card-header {
+  justify-content: space-between;
+}
+
+.card-header > span {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.filter-bar {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #f8faf9;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.el-pagination {
+  margin-top: 18px;
+  justify-content: flex-end;
 }

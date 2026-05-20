@@ -3,7 +3,7 @@
     <template #header>
       <div style="display: flex; justify-content: space-between; align-items: center">
         <span>代码生成配置</span>
-        <el-button type="primary" @click="$router.push('/admin/codegen/create')">新建配置</el-button>
+        <el-button type="primary" @click="$router.push('/admin/codegen/create')" v-permission="'codegen:create'">新建配置</el-button>
       </div>
     </template>
 
@@ -29,12 +29,12 @@
       </el-table-column>
       <el-table-column label="操作" fixed="right" width="280">
         <template #default="{ row }">
-          <el-button size="small" @click="$router.push(`/admin/codegen/edit/${row.id}`)">编辑</el-button>
-          <el-button size="small" type="warning" @click="handlePreview(row)">预览</el-button>
-          <el-button size="small" type="success" @click="handleGenerate(row)">
+          <el-button size="small" @click="$router.push(`/admin/codegen/edit/${row.id}`)" v-permission="'codegen:update'">编辑</el-button>
+          <el-button size="small" type="warning" @click="handlePreview(row)" v-permission="'codegen:preview'">预览</el-button>
+          <el-button size="small" type="success" @click="handleGenerate(row)" v-permission="'codegen:update_generate'">
             {{ row.generated ? '重新生成' : '生成代码' }}
           </el-button>
-          <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+          <el-button size="small" type="danger" @click="handleDelete(row)" v-permission="'codegen:delete'">删除</el-button>
         </template>
       </el-table-column>
     </el-table>

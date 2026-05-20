@@ -59,12 +59,13 @@
         </el-table-column>
         <el-table-column label="操作" width="150" fixed="right">
           <template #default="scope">
-            <el-button size="small" @click="viewDetail(scope.row)">详情</el-button>
+            <el-button size="small" @click="viewDetail(scope.row)" v-permission="'payment:get'">详情</el-button>
             <el-button
               size="small"
               type="danger"
               @click="refundPayment(scope.row)"
               v-if="scope.row.status === 1"
+              v-permission="'payment:update_refund'"
             >
               退款
             </el-button>

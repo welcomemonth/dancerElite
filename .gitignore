@@ -29,3 +29,10 @@ go.work.sum
 
 # uploads directory
 uploads/
+
+# local deploy output
+deploy/
+
+# embedded frontend build output
+internal/web/dist/*
+!internal/web/dist/.gitkeep

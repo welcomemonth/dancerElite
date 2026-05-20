@@ -4,17 +4,25 @@ import { usePermissionStore } from '../store/permission'
 // 用法: v-permission="'article:delete'" 或 v-permission="['article:delete', 'article:update']"
 export const vPermission = {
   mounted(el, binding) {
-    const permissionStore = usePermissionStore()
-    const value = binding.value
+    applyPermission(el, binding)
+  },
+  updated(el, binding) {
+    applyPermission(el, binding)
+  }
+}
 
-    if (!value) return
+const applyPermission = (el, binding) => {
+  const permissionStore = usePermissionStore()
+  const value = binding.value
 
-    const perms = Array.isArray(value) ? value : [value]
-    const hasAny = perms.some(p => permissionStore.hasPermission(p))
+  if (!value || el.dataset.permissionRemoved === '1') return
 
-    if (!hasAny) {
-      el.parentNode?.removeChild(el)
-    }
+  const perms = Array.isArray(value) ? value : [value]
+  const hasAny = perms.some(p => permissionStore.hasPermission(p))
+
+  if (!hasAny) {
+    el.dataset.permissionRemoved = '1'
+    el.parentNode?.removeChild(el)
   }
 }
 
