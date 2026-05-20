@@ -1,24 +1,30 @@
 <template>
-  <el-card v-loading="initialLoading">
-    <template #header>
-      <div style="display: flex; justify-content: space-between; align-items: center">
-        <span>{{ config.display_name || '数据管理' }}</span>
-        <el-button type="primary" @click="openForm()" v-permission="crudPermission('create')">新增</el-button>
+  <div class="dynamic-crud" v-loading="initialLoading">
+    <div class="page-header">
+      <div>
+        <h2 class="page-header__title">{{ config.display_name || '数据管理' }}</h2>
+        <p class="page-header__desc">动态生成的数据 CRUD 管理页</p>
       </div>
-    </template>
+      <div class="page-header__actions">
+        <el-button type="primary" :icon="Plus" @click="openForm()" v-permission="crudPermission('create')">新增</el-button>
+      </div>
+    </div>
 
     <!-- 搜索栏 -->
-    <div v-if="searchColumns.length" style="margin-bottom: 16px; display: flex; gap: 12px; align-items: center">
+    <div v-if="searchColumns.length" class="filter-bar">
       <el-input
         v-model="keyword"
         placeholder="搜索..."
         clearable
         style="width: 300px"
+        :prefix-icon="Search"
         @keyup.enter="loadData"
         @clear="loadData"
       />
-      <el-button type="primary" @click="loadData">搜索</el-button>
+      <el-button type="primary" :icon="Search" @click="loadData">搜索</el-button>
     </div>
+
+    <el-card>
 
     <!-- 数据表格 -->
     <el-table :data="list" stripe v-loading="loading">
@@ -153,13 +159,15 @@
         <el-button type="primary" :loading="saving" @click="handleSave" v-permission="crudPermission(editingId ? 'update' : 'create')">保存</el-button>
       </template>
     </el-dialog>
-  </el-card>
+    </el-card>
+  </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus, Search } from '@element-plus/icons-vue'
 import request from '../../api/request'
 
 const route = useRoute()
@@ -333,3 +341,10 @@ onMounted(async () => {
   initialLoading.value = false
 })
 </script>
+
+<style scoped>
+.dynamic-crud {
+  display: flex;
+  flex-direction: column;
+}
+</style>

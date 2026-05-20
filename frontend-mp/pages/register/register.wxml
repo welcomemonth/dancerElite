@@ -1,11 +1,83 @@
-<view class="container">
-  <form bindsubmit="onSubmit">
-    <view class="field">
-      <input name="phone" placeholder="请输入手机号" type="number" bindinput="onInputPhone" />
+<view class="register">
+  <!-- 已注册状态 -->
+  <block wx:if="{{registered}}">
+    <view class="register__head">
+      <view class="register__icon register__icon--ok">✓</view>
+      <view class="register__title">您已完成注册</view>
+      <view class="register__subtitle">可以开始探索远山平台</view>
     </view>
-    <view class="field">
-      <input name="name" placeholder="请输入昵称" bindinput="onInputName" />
+
+    <view class="register__card">
+      <view class="info-row">
+        <text class="info-row__label">手机号</text>
+        <text class="info-row__value">{{user.phone}}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-row__label">昵称</text>
+        <text class="info-row__value">{{user.name || '未设置'}}</text>
+      </view>
+      <button class="btn btn-primary btn-block btn-lg mt-16" bindtap="onGoHome">去逛逛</button>
     </view>
-    <button formType="submit" class="btn">注册</button>
-  </form>
-</view> 
+  </block>
+
+  <!-- 未注册：表单 -->
+  <block wx:else>
+    <view class="register__head">
+      <view class="register__icon">👋</view>
+      <view class="register__title">欢迎加入远山</view>
+      <view class="register__subtitle">完善信息后即可解锁全部功能</view>
+    </view>
+
+    <view class="register__card">
+      <view class="form-field">
+        <text class="form-field__label">手机号</text>
+        <view class="input-wrap {{focused === 'phone' ? 'is-focus' : ''}}">
+          <input
+            name="phone"
+            placeholder="请输入手机号"
+            placeholder-style="color:#94a3b8"
+            type="number"
+            maxlength="11"
+            value="{{phone}}"
+            bindinput="onInputPhone"
+            bindfocus="onFocus"
+            bindblur="onBlur"
+            data-field="phone"
+          />
+        </view>
+      </view>
+
+      <view class="form-field">
+        <text class="form-field__label">昵称</text>
+        <view class="input-wrap {{focused === 'name' ? 'is-focus' : ''}}">
+          <input
+            name="name"
+            placeholder="您希望平台如何称呼您"
+            placeholder-style="color:#94a3b8"
+            maxlength="20"
+            value="{{name}}"
+            bindinput="onInputName"
+            bindfocus="onFocus"
+            bindblur="onBlur"
+            data-field="name"
+          />
+        </view>
+      </view>
+
+      <button
+        class="btn btn-primary btn-block btn-lg submit-btn"
+        bindtap="onSubmit"
+        loading="{{submitting}}"
+      >
+        完成注册
+      </button>
+    </view>
+
+    <view class="register__hint">
+      <view class="register__hint-title">为什么需要绑定手机？</view>
+      <view class="register__hint-text">• 用于活动报名通知</view>
+      <view class="register__hint-text">• 用于订单与支付凭证</view>
+      <view class="register__hint-text">• 仅平台运营使用，不对外提供</view>
+    </view>
+  </block>
+</view>

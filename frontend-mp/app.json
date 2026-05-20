@@ -3,11 +3,48 @@
     "pages/home/home",
     "pages/register/register",
     "pages/articles/list",
-    "pages/articles/detail"
+    "pages/articles/detail",
+    "pages/profile/profile"
   ],
   "window": {
-    "navigationBarTitleText": "远山公益小程序",
-    "navigationBarBackgroundColor": "#667eea",
-    "navigationBarTextStyle": "white"
-  }
-} 
+    "navigationBarTitleText": "远山平台",
+    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f8fafc",
+    "backgroundTextStyle": "dark",
+    "enablePullDownRefresh": false
+  },
+  "tabBar": {
+    "color": "#94a3b8",
+    "selectedColor": "#2563eb",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/home/home",
+        "text": "首页",
+        "iconPath": "static/tabbar/home.png",
+        "selectedIconPath": "static/tabbar/home-active.png"
+      },
+      {
+        "pagePath": "pages/articles/list",
+        "text": "文章",
+        "iconPath": "static/tabbar/article.png",
+        "selectedIconPath": "static/tabbar/article-active.png"
+      },
+      {
+        "pagePath": "pages/register/register",
+        "text": "报名",
+        "iconPath": "static/tabbar/register.png",
+        "selectedIconPath": "static/tabbar/register-active.png"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的",
+        "iconPath": "static/tabbar/profile.png",
+        "selectedIconPath": "static/tabbar/profile-active.png"
+      }
+    ]
+  },
+  "style": "v2"
+}

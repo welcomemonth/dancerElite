@@ -1,33 +1,34 @@
 <template>
   <div class="payment-list">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <span>支付管理</span>
-        </div>
-      </template>
-
-      <div class="filter-bar">
-        <el-select v-model="filter.status" placeholder="支付状态" @change="loadPayments">
-          <el-option label="全部" :value="-1" />
-          <el-option label="待支付" :value="0" />
-          <el-option label="已支付" :value="1" />
-          <el-option label="已退款" :value="2" />
-          <el-option label="支付失败" :value="3" />
-        </el-select>
-        <el-select v-model="filter.biz_type" placeholder="业务类型" clearable @change="loadPayments">
-          <el-option label="全部" value="" />
-          <el-option label="报名" value="registration" />
-          <el-option label="捐赠" value="donation" />
-        </el-select>
+    <div class="page-header">
+      <div>
+        <h2 class="page-header__title">支付管理</h2>
+        <p class="page-header__desc">所有支付订单流水、退款处理</p>
       </div>
+    </div>
 
-      <el-table :data="payments" stripe v-loading="loading">
+    <div class="filter-bar">
+      <el-select v-model="filter.status" placeholder="支付状态" @change="loadPayments" style="width: 140px">
+        <el-option label="全部状态" :value="-1" />
+        <el-option label="待支付" :value="0" />
+        <el-option label="已支付" :value="1" />
+        <el-option label="已退款" :value="2" />
+        <el-option label="支付失败" :value="3" />
+      </el-select>
+      <el-select v-model="filter.biz_type" placeholder="业务类型" clearable @change="loadPayments" style="width: 160px">
+        <el-option label="全部业务" value="" />
+        <el-option label="报名" value="registration" />
+        <el-option label="捐赠" value="donation" />
+      </el-select>
+    </div>
+
+    <el-card>
+      <el-table :data="payments" v-loading="loading">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="order_no" label="订单号" width="200" />
-        <el-table-column prop="amount" label="金额" width="100">
+        <el-table-column prop="amount" label="金额" width="110">
           <template #default="scope">
-            ¥{{ scope.row.amount }}
+            <span style="color: var(--brand-700); font-weight: 600">¥{{ scope.row.amount }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="pay_type" label="支付方式" width="120">
@@ -57,12 +58,13 @@
             {{ scope.row.paid_at ? formatDate(scope.row.paid_at) : '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column label="操作" width="170" fixed="right">
           <template #default="scope">
-            <el-button size="small" @click="viewDetail(scope.row)" v-permission="'payment:get'">详情</el-button>
+            <el-button text type="primary" :icon="View" @click="viewDetail(scope.row)" v-permission="'payment:get'">详情</el-button>
             <el-button
-              size="small"
+              text
               type="danger"
+              :icon="Refresh"
               @click="refundPayment(scope.row)"
               v-if="scope.row.status === 1"
               v-permission="'payment:update_refund'"
@@ -110,6 +112,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { View, Refresh } from '@element-plus/icons-vue'
 import { paymentApi } from '../../api'
 
 const payments = ref([])
@@ -178,19 +181,8 @@ onMounted(() => loadPayments())
 </script>
 
 <style scoped>
-.card-header {
+.payment-list {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.filter-bar {
-  margin-bottom: 20px;
-}
-.filter-bar .el-select {
-  margin-right: 10px;
-}
-.el-pagination {
-  margin-top: 20px;
-  text-align: right;
+  flex-direction: column;
 }
 </style>

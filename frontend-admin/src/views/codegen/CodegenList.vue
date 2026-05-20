@@ -1,45 +1,50 @@
 <template>
-  <el-card>
-    <template #header>
-      <div style="display: flex; justify-content: space-between; align-items: center">
-        <span>代码生成配置</span>
-        <el-button type="primary" @click="$router.push('/admin/codegen/create')" v-permission="'codegen:create'">新建配置</el-button>
+  <div class="codegen-list">
+    <div class="page-header">
+      <div>
+        <h2 class="page-header__title">代码生成</h2>
+        <p class="page-header__desc">基于数据库表结构一键生成 Go 后端 CRUD 代码</p>
       </div>
-    </template>
+      <div class="page-header__actions">
+        <el-button type="primary" :icon="Plus" @click="$router.push('/admin/codegen/create')" v-permission="'codegen:create'">
+          新建配置
+        </el-button>
+      </div>
+    </div>
 
-    <el-table :data="list" stripe v-loading="loading">
-      <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column prop="table_name" label="数据库表" width="180" />
-      <el-table-column prop="module_name" label="模块名" width="150" />
-      <el-table-column prop="display_name" label="显示名称" width="150" />
-      <el-table-column label="状态" width="120">
-        <template #default="{ row }">
-          <el-tag :type="row.generated ? 'success' : 'info'">
-            {{ row.generated ? '已生成' : '未生成' }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="生成时间" width="180">
-        <template #default="{ row }">
-          {{ row.generated_at ? formatDate(row.generated_at) : '-' }}
-        </template>
-      </el-table-column>
-      <el-table-column prop="created_at" label="创建时间" width="180">
-        <template #default="{ row }">{{ formatDate(row.created_at) }}</template>
-      </el-table-column>
-      <el-table-column label="操作" fixed="right" width="280">
-        <template #default="{ row }">
-          <el-button size="small" @click="$router.push(`/admin/codegen/edit/${row.id}`)" v-permission="'codegen:update'">编辑</el-button>
-          <el-button size="small" type="warning" @click="handlePreview(row)" v-permission="'codegen:preview'">预览</el-button>
-          <el-button size="small" type="success" @click="handleGenerate(row)" v-permission="'codegen:update_generate'">
-            {{ row.generated ? '重新生成' : '生成代码' }}
-          </el-button>
-          <el-button size="small" type="danger" @click="handleDelete(row)" v-permission="'codegen:delete'">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <el-card>
+      <el-table :data="list" v-loading="loading">
+        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column prop="table_name" label="数据库表" width="180" />
+        <el-table-column prop="module_name" label="模块名" width="150" />
+        <el-table-column prop="display_name" label="显示名称" width="150" />
+        <el-table-column label="状态" width="120">
+          <template #default="{ row }">
+            <el-tag :type="row.generated ? 'success' : 'info'">
+              {{ row.generated ? '已生成' : '未生成' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="生成时间" width="180">
+          <template #default="{ row }">
+            {{ row.generated_at ? formatDate(row.generated_at) : '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="created_at" label="创建时间" width="180">
+          <template #default="{ row }">{{ formatDate(row.created_at) }}</template>
+        </el-table-column>
+        <el-table-column label="操作" fixed="right" width="320">
+          <template #default="{ row }">
+            <el-button text type="primary" :icon="Edit" @click="$router.push(`/admin/codegen/edit/${row.id}`)" v-permission="'codegen:update'">编辑</el-button>
+            <el-button text type="warning" :icon="View" @click="handlePreview(row)" v-permission="'codegen:preview'">预览</el-button>
+            <el-button text type="success" :icon="MagicStick" @click="handleGenerate(row)" v-permission="'codegen:update_generate'">
+              {{ row.generated ? '重新生成' : '生成' }}
+            </el-button>
+            <el-button text type="danger" :icon="Delete" @click="handleDelete(row)" v-permission="'codegen:delete'">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
 
-    <div style="margin-top: 16px; display: flex; justify-content: flex-end">
       <el-pagination
         v-model:current-page="page"
         v-model:page-size="pageSize"
@@ -49,7 +54,7 @@
         @current-change="loadList"
         @size-change="loadList"
       />
-    </div>
+    </el-card>
 
     <!-- 代码预览弹窗 -->
     <el-dialog v-model="previewVisible" title="代码预览" width="80%" top="5vh">
@@ -71,12 +76,13 @@
         </el-tab-pane>
       </el-tabs>
     </el-dialog>
-  </el-card>
+  </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus, Edit, View, MagicStick, Delete } from '@element-plus/icons-vue'
 import { codegenApi } from '../../api'
 
 const list = ref([])
@@ -154,16 +160,21 @@ onMounted(loadList)
 </script>
 
 <style scoped>
+.codegen-list {
+  display: flex;
+  flex-direction: column;
+}
 .code-block {
-  background: #1e1e1e;
-  color: #d4d4d4;
+  background: #0f172a;
+  color: #e2e8f0;
   padding: 16px;
-  border-radius: 4px;
+  border-radius: var(--r-md);
   overflow-x: auto;
   font-size: 13px;
-  line-height: 1.5;
+  line-height: 1.6;
   max-height: 60vh;
   white-space: pre;
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-family: ui-monospace, 'Consolas', 'Monaco', monospace;
+  margin: 0;
 }
 </style>

@@ -1,39 +1,44 @@
 <template>
   <div class="article-list">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <span>文章管理</span>
-          <el-button type="primary" @click="createArticle" v-permission="'article:create'">新增文章</el-button>
-        </div>
-      </template>
-      
-      <!-- 筛选条件 -->
-      <div class="filter-bar">
-        <el-select v-model="filter.column_id" placeholder="选择栏目" clearable @change="loadArticles">
-          <el-option label="全部栏目" :value="0" />
-          <el-option
-            v-for="column in columns"
-            :key="column.id"
-            :label="column.name"
-            :value="column.id"
-          />
-        </el-select>
-        
-        <el-select v-model="filter.status" placeholder="选择状态" @change="loadArticles">
-          <el-option label="全部" :value="-1" />
-          <el-option label="草稿" :value="0" />
-          <el-option label="已发布" :value="1" />
-        </el-select>
+    <div class="page-header">
+      <div>
+        <h2 class="page-header__title">文章管理</h2>
+        <p class="page-header__desc">管理平台所有文章内容，支持栏目筛选与状态切换</p>
       </div>
-      
+      <div class="page-header__actions">
+        <el-button type="primary" :icon="Plus" @click="createArticle" v-permission="'article:create'">
+          新增文章
+        </el-button>
+      </div>
+    </div>
+
+    <!-- 筛选条件 -->
+    <div class="filter-bar">
+      <el-select v-model="filter.column_id" placeholder="选择栏目" clearable @change="loadArticles" style="width: 180px">
+        <el-option label="全部栏目" :value="0" />
+        <el-option
+          v-for="column in columns"
+          :key="column.id"
+          :label="column.name"
+          :value="column.id"
+        />
+      </el-select>
+
+      <el-select v-model="filter.status" placeholder="选择状态" @change="loadArticles" style="width: 140px">
+        <el-option label="全部状态" :value="-1" />
+        <el-option label="草稿" :value="0" />
+        <el-option label="已发布" :value="1" />
+      </el-select>
+    </div>
+
+    <el-card>
       <!-- 文章列表 -->
-      <el-table :data="articles" stripe v-loading="loading">
+      <el-table :data="articles" v-loading="loading">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="title" label="标题" show-overflow-tooltip />
         <el-table-column prop="column_name" label="栏目" width="120" />
         <el-table-column prop="author" label="作者" width="100" />
-        <el-table-column prop="status" label="状态" width="80">
+        <el-table-column prop="status" label="状态" width="90">
           <template #default="scope">
             <el-tag :type="scope.row.status === 1 ? 'success' : 'info'">
               {{ scope.row.status === 1 ? '已发布' : '草稿' }}
@@ -46,22 +51,27 @@
             {{ formatDate(scope.row.created_at) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="220" fixed="right">
           <template #default="scope">
-            <el-button size="small" @click="editArticle(scope.row.id)" v-permission="'article:update'">编辑</el-button>
-            <el-button 
-              size="small" 
+            <el-button text type="primary" :icon="Edit" @click="editArticle(scope.row.id)" v-permission="'article:update'">
+              编辑
+            </el-button>
+            <el-button
+              text
               :type="scope.row.status === 1 ? 'warning' : 'success'"
+              :icon="scope.row.status === 1 ? VideoPause : VideoPlay"
               @click="toggleStatus(scope.row)"
               v-permission="'article:update_status'"
             >
               {{ scope.row.status === 1 ? '下架' : '发布' }}
             </el-button>
-            <el-button size="small" type="danger" @click="deleteArticle(scope.row)" v-permission="'article:delete'">删除</el-button>
+            <el-button text type="danger" :icon="Delete" @click="deleteArticle(scope.row)" v-permission="'article:delete'">
+              删除
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
-      
+
       <!-- 分页 -->
       <el-pagination
         v-model:current-page="pagination.page"
@@ -80,6 +90,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus, Edit, Delete, VideoPlay, VideoPause } from '@element-plus/icons-vue'
 import { articleApi, columnApi } from '../api'
 
 const router = useRouter()
@@ -197,22 +208,9 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.card-header {
+.article-list {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
 }
+</style>
 
-.filter-bar {
-  margin-bottom: 20px;
-}
-
-.filter-bar .el-select {
-  margin-right: 10px;
-}
-
-.el-pagination {
-  margin-top: 20px;
-  text-align: right;
-}
-</style> 

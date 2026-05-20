@@ -1,17 +1,20 @@
 <template>
   <div class="activity-edit">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <span>{{ isEdit ? '编辑活动' : '新增活动' }}</span>
-          <div>
-            <el-button @click="$router.back()">返回</el-button>
-            <el-button type="primary" @click="saveActivity(0)" v-permission="isEdit ? 'activity:update' : 'activity:create'">保存草稿</el-button>
-            <el-button type="success" @click="saveActivity(1)" v-permission="isEdit ? 'activity:update' : 'activity:create'">保存并开放报名</el-button>
-          </div>
+    <div class="page-header">
+      <div class="page-header__back">
+        <el-button text :icon="ArrowLeft" @click="$router.back()">返回</el-button>
+        <div>
+          <h2 class="page-header__title">{{ isEdit ? '编辑活动' : '新增活动' }}</h2>
+          <p class="page-header__desc">{{ isEdit ? '修改活动信息' : '发布一个新活动并开放报名' }}</p>
         </div>
-      </template>
+      </div>
+      <div class="page-header__actions">
+        <el-button :icon="DocumentChecked" @click="saveActivity(0)" v-permission="isEdit ? 'activity:update' : 'activity:create'">保存草稿</el-button>
+        <el-button type="primary" :icon="Promotion" @click="saveActivity(1)" v-permission="isEdit ? 'activity:update' : 'activity:create'">保存并开放报名</el-button>
+      </div>
+    </div>
 
+    <el-card>
       <el-form :model="form" :rules="rules" ref="formRef" label-width="120px" class="activity-form">
         <el-form-item label="活动名称" prop="title">
           <el-input v-model="form.title" placeholder="请输入活动名称" />
@@ -114,7 +117,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, ArrowLeft, DocumentChecked, Promotion } from '@element-plus/icons-vue'
 import RichEditor from '../../components/RichEditor.vue'
 import { activityApi } from '../../api'
 
@@ -203,10 +206,14 @@ onMounted(() => loadActivity())
 </script>
 
 <style scoped>
-.card-header {
+.activity-edit {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+}
+.page-header__back {
+  display: flex;
   align-items: center;
+  gap: var(--sp-3);
 }
 .activity-form {
   max-width: 1000px;
@@ -214,14 +221,14 @@ onMounted(() => loadActivity())
 .thumbnail-upload {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--sp-3);
 }
 .thumbnail {
   width: 200px;
   height: 150px;
   object-fit: cover;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-md);
 }
 .upload-icon {
   width: 200px;
@@ -229,19 +236,22 @@ onMounted(() => loadActivity())
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px dashed #d9d9d9;
-  border-radius: 4px;
+  border: 1px dashed var(--border-1);
+  border-radius: var(--r-md);
   cursor: pointer;
   font-size: 40px;
-  color: #8c939d;
+  color: var(--text-3);
+  background: var(--bg-soft);
+  transition: all var(--dur-base) var(--ease);
 }
 .upload-icon:hover {
-  border-color: #409eff;
-  color: #409eff;
+  border-color: var(--brand-400);
+  color: var(--brand-600);
+  background: var(--brand-50);
 }
 .form-tip {
   margin-left: 10px;
-  color: #999;
+  color: var(--text-3);
   font-size: 12px;
 }
 </style>

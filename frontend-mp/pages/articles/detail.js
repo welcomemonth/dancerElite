@@ -3,7 +3,33 @@ const api = require('../../utils/api.js');
 Page({
   data: {
     article: null,
-    loading: true
+    loading: true,
+    liked: false,
+    favorited: false
+  },
+
+  onLike() {
+    this.setData({ liked: !this.data.liked });
+    wx.showToast({
+      title: this.data.liked ? '已点赞' : '已取消',
+      icon: 'none'
+    });
+  },
+
+  onFavorite() {
+    this.setData({ favorited: !this.data.favorited });
+    wx.showToast({
+      title: this.data.favorited ? '已收藏' : '已取消收藏',
+      icon: 'none'
+    });
+  },
+
+  onShareAppMessage() {
+    const a = this.data.article || {};
+    return {
+      title: a.title || '远山平台',
+      path: `/pages/articles/detail?id=${a.id || ''}`
+    };
   },
 
   onLoad(options) {

@@ -1,39 +1,36 @@
 <template>
   <div class="operation-log-page">
+    <div class="page-header">
+      <div>
+        <h2 class="page-header__title">操作日志</h2>
+        <p class="page-header__desc">系统所有用户的关键操作审计记录</p>
+      </div>
+      <div class="page-header__actions">
+        <el-button :icon="Refresh" @click="fetchLogs">刷新</el-button>
+      </div>
+    </div>
+
+    <el-form :model="query" inline class="filter-bar">
+      <el-form-item label="用户">
+        <el-input v-model="query.username" placeholder="请输入用户名" clearable />
+      </el-form-item>
+      <el-form-item label="模块">
+        <el-input v-model="query.module" placeholder="如 articles" clearable />
+      </el-form-item>
+      <el-form-item label="操作">
+        <el-select v-model="query.action" placeholder="全部操作" clearable style="width: 140px">
+          <el-option label="新增" value="create" />
+          <el-option label="更新" value="update" />
+          <el-option label="删除" value="delete" />
+        </el-select>
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" :icon="Search" @click="handleSearch">查询</el-button>
+        <el-button @click="resetSearch">重置</el-button>
+      </el-form-item>
+    </el-form>
+
     <el-card>
-      <template #header>
-        <div class="card-header">
-          <span>操作日志</span>
-          <el-button @click="fetchLogs">
-            <el-icon><Refresh /></el-icon>
-            刷新
-          </el-button>
-        </div>
-      </template>
-
-      <el-form :model="query" inline class="filter-bar">
-        <el-form-item label="用户">
-          <el-input v-model="query.username" placeholder="请输入用户名" clearable />
-        </el-form-item>
-        <el-form-item label="模块">
-          <el-input v-model="query.module" placeholder="如 articles" clearable />
-        </el-form-item>
-        <el-form-item label="操作">
-          <el-select v-model="query.action" placeholder="全部操作" clearable style="width: 140px">
-            <el-option label="新增" value="create" />
-            <el-option label="更新" value="update" />
-            <el-option label="删除" value="delete" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">
-            <el-icon><Search /></el-icon>
-            查询
-          </el-button>
-          <el-button @click="resetSearch">重置</el-button>
-        </el-form-item>
-      </el-form>
-
       <el-table :data="logs" v-loading="loading" style="width: 100%">
         <el-table-column prop="id" label="ID" width="90" />
         <el-table-column prop="username" label="用户" min-width="120">
@@ -149,21 +146,12 @@ onMounted(fetchLogs)
 
 <style scoped>
 .operation-log-page {
-  padding: 20px;
-}
-
-.card-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.filter-bar {
-  margin-bottom: 12px;
+  flex-direction: column;
 }
 
 .detail-text {
-  color: #64748b;
+  color: var(--text-2);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   font-size: 12px;
 }

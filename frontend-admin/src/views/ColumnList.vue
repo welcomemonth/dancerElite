@@ -1,14 +1,19 @@
 <template>
   <div class="column-list">
+    <div class="page-header">
+      <div>
+        <h2 class="page-header__title">栏目管理</h2>
+        <p class="page-header__desc">内容栏目维护，用于文章分类与导航</p>
+      </div>
+      <div class="page-header__actions">
+        <el-button type="primary" :icon="Plus" @click="showDialog = true" v-permission="'column:create'">
+          新增栏目
+        </el-button>
+      </div>
+    </div>
+
     <el-card>
-      <template #header>
-        <div class="card-header">
-          <span>栏目管理</span>
-          <el-button type="primary" @click="showDialog = true" v-permission="'column:create'">新增栏目</el-button>
-        </div>
-      </template>
-      
-      <el-table :data="columns" stripe>
+      <el-table :data="columns">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="name" label="栏目名称" />
         <el-table-column prop="description" label="描述" />
@@ -20,8 +25,8 @@
         </el-table-column>
         <el-table-column label="操作" width="180">
           <template #default="scope">
-            <el-button size="small" @click="editColumn(scope.row)" v-permission="'column:update'">编辑</el-button>
-            <el-button size="small" type="danger" @click="deleteColumn(scope.row)" v-permission="'column:delete'">删除</el-button>
+            <el-button text type="primary" :icon="Edit" @click="editColumn(scope.row)" v-permission="'column:update'">编辑</el-button>
+            <el-button text type="danger" :icon="Delete" @click="deleteColumn(scope.row)" v-permission="'column:delete'">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -51,6 +56,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus, Edit, Delete } from '@element-plus/icons-vue'
 import { columnApi } from '../api'
 
 const columns = ref([])
@@ -144,9 +150,9 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.card-header {
+.column-list {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
 }
-</style> 
+</style>
+

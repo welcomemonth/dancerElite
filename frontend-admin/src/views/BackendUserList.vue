@@ -1,20 +1,23 @@
 <template>
   <div class="user-management">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <span>用户管理</span>
-          <el-button 
-            type="primary" 
-            @click="showCreateDialog = true"
-            v-permission="'backend_user:create'"
-          >
-            <el-icon><Plus /></el-icon>
-            新增用户
-          </el-button>
-        </div>
-      </template>
+    <div class="page-header">
+      <div>
+        <h2 class="page-header__title">后台用户</h2>
+        <p class="page-header__desc">系统管理员账号、角色分配与状态管理</p>
+      </div>
+      <div class="page-header__actions">
+        <el-button
+          type="primary"
+          :icon="Plus"
+          @click="showCreateDialog = true"
+          v-permission="'backend_user:create'"
+        >
+          新增用户
+        </el-button>
+      </div>
+    </div>
 
+    <el-card>
       <el-table :data="users" style="width: 100%" v-loading="loading">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="username" label="用户名" width="150" />
@@ -38,28 +41,31 @@
             {{ formatDate(scope.row.created_at) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="300" v-if="canOperateUsers">
+        <el-table-column label="操作" width="340" v-if="canOperateUsers">
           <template #default="scope">
-            <el-button size="small" @click="editUser(scope.row)" v-permission="'backend_user:update'">编辑</el-button>
-            <el-button 
-              size="small" 
+            <el-button text type="primary" :icon="Edit" @click="editUser(scope.row)" v-permission="'backend_user:update'">编辑</el-button>
+            <el-button
+              text
               :type="scope.row.status === 1 ? 'warning' : 'success'"
+              :icon="scope.row.status === 1 ? Lock : Unlock"
               @click="toggleUserStatus(scope.row)"
               v-permission="'backend_user:update_status'"
             >
               {{ scope.row.status === 1 ? '禁用' : '启用' }}
             </el-button>
-            <el-button 
-              size="small" 
-              type="danger"
+            <el-button
+              text
+              type="warning"
+              :icon="Key"
               @click="resetPassword(scope.row)"
               v-permission="'backend_user:update_reset-password'"
             >
               重置密码
             </el-button>
-            <el-button 
-              size="small" 
-              type="danger" 
+            <el-button
+              text
+              type="danger"
+              :icon="Delete"
               @click="deleteUser(scope.row)"
               :disabled="scope.row.id === currentUserId"
               v-permission="'backend_user:delete'"
@@ -167,7 +173,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Edit, Delete, Lock, Unlock, Key } from '@element-plus/icons-vue'
 import { backendUserApi, roleApi } from '../api'
 import { usePermissionStore } from '../store/permission'
 
@@ -420,24 +426,19 @@ const formatDate = (dateString) => {
 
 <style scoped>
 .user-management {
-  padding: 20px;
-}
-
-.card-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
 }
 
 .pagination {
   display: flex;
-  justify-content: center;
-  margin-top: 20px;
+  justify-content: flex-end;
+  margin-top: var(--sp-5);
 }
 
 .warning-text {
-  color: #e6a23c;
-  font-weight: bold;
+  color: var(--warning);
+  font-weight: 600;
   margin: 10px 0;
 }
 
@@ -446,8 +447,8 @@ const formatDate = (dateString) => {
 }
 
 .password-display :deep(.el-input__inner) {
-  font-family: monospace;
-  font-weight: bold;
-  color: #409eff;
+  font-family: ui-monospace, monospace;
+  font-weight: 600;
+  color: var(--brand-600);
 }
 </style> 

@@ -1,22 +1,19 @@
 <template>
   <div class="menu-management">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <span>菜单管理</span>
-          <div class="header-actions">
-            <el-button @click="fetchMenus">
-              <el-icon><Refresh /></el-icon>
-              刷新
-            </el-button>
-            <el-button type="primary" @click="openCreateDialog" v-permission="'menu:create'">
-              <el-icon><Plus /></el-icon>
-              新增菜单
-            </el-button>
-          </div>
-        </div>
-      </template>
+    <div class="page-header">
+      <div>
+        <h2 class="page-header__title">菜单管理</h2>
+        <p class="page-header__desc">系统菜单结构与按钮权限配置</p>
+      </div>
+      <div class="page-header__actions">
+        <el-button :icon="Refresh" @click="fetchMenus">刷新</el-button>
+        <el-button type="primary" :icon="Plus" @click="openCreateDialog" v-permission="'menu:create'">
+          新增菜单
+        </el-button>
+      </div>
+    </div>
 
+    <el-card>
       <div class="menu-workspace">
         <aside class="menu-tree-panel">
           <div class="tree-title">菜单树</div>
@@ -92,18 +89,19 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="260" fixed="right">
+            <el-table-column label="操作" width="280" fixed="right">
               <template #default="{ row }">
-                <el-button size="small" @click="editMenu(row)" v-permission="'menu:update'">编辑</el-button>
+                <el-button text type="primary" :icon="Edit" @click="editMenu(row)" v-permission="'menu:update'">编辑</el-button>
                 <el-button
-                  size="small"
+                  text
                   :type="row.status === 1 ? 'warning' : 'success'"
+                  :icon="row.status === 1 ? Lock : Unlock"
                   @click="toggleMenuStatus(row)"
                   v-permission="'menu:update_status'"
                 >
                   {{ row.status === 1 ? '禁用' : '启用' }}
                 </el-button>
-                <el-button size="small" type="danger" @click="deleteMenu(row)" v-permission="'menu:delete'">删除</el-button>
+                <el-button text type="danger" :icon="Delete" @click="deleteMenu(row)" v-permission="'menu:delete'">删除</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -136,7 +134,7 @@
 <script setup>
 import { computed, defineComponent, h, onMounted, ref, resolveComponent } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Refresh } from '@element-plus/icons-vue'
+import { Plus, Refresh, Edit, Delete, Lock, Unlock } from '@element-plus/icons-vue'
 import { menuApi } from '../api'
 
 const loading = ref(false)
@@ -518,42 +516,33 @@ onMounted(fetchMenus)
 
 <style scoped>
 .menu-management {
-  padding: 20px;
+  display: flex;
+  flex-direction: column;
 }
 
-.card-header,
-.header-actions,
 .menu-title {
   display: flex;
   align-items: center;
 }
 
-.card-header {
-  justify-content: space-between;
-}
-
-.header-actions {
-  gap: 8px;
-}
-
 .menu-workspace {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
-  gap: 16px;
+  gap: var(--sp-4);
   min-height: 520px;
 }
 
 .menu-tree-panel {
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  padding: 12px;
-  background: #fbfcfe;
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-md);
+  padding: var(--sp-3);
+  background: var(--bg-soft);
   overflow: auto;
 }
 
 .tree-title {
   margin-bottom: 10px;
-  color: #303133;
+  color: var(--text-1);
   font-weight: 600;
 }
 
@@ -584,14 +573,14 @@ onMounted(fetchMenus)
 }
 
 .list-title {
-  color: #303133;
+  color: var(--text-1);
   font-size: 16px;
   font-weight: 600;
   line-height: 24px;
 }
 
 .list-subtitle {
-  color: #909399;
+  color: var(--text-3);
   font-size: 12px;
   line-height: 18px;
 }
@@ -608,9 +597,9 @@ onMounted(fetchMenus)
   min-width: 28px;
   height: 20px;
   padding: 0 6px;
-  border-radius: 4px;
-  background: #eef2ff;
-  color: #4338ca;
+  border-radius: var(--r-sm);
+  background: var(--brand-50);
+  color: var(--brand-700);
   font-size: 12px;
   font-weight: 600;
 }

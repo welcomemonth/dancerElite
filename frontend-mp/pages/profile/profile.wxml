@@ -1,0 +1,51 @@
+<view class="profile">
+  <!-- 用户卡 -->
+  <view class="banner">
+    <view class="banner__glow banner__glow--1"></view>
+    <view class="banner__glow banner__glow--2"></view>
+    <view class="user-head">
+      <view class="user-avatar">{{avatarText}}</view>
+      <view class="user-info">
+        <view class="user-name">{{user.name || '未设置昵称'}}</view>
+        <view class="user-meta">
+          <text wx:if="{{user.phone}}">{{user.phone}}</text>
+          <text wx:else class="tag tag-warning">未绑定手机</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 菜单组 -->
+  <view class="menu-group">
+    <view class="menu-row" bindtap="onEditProfile">
+      <view class="menu-icon">👤</view>
+      <view class="menu-text">个人资料</view>
+      <view class="menu-arrow">›</view>
+    </view>
+    <view class="menu-row" bindtap="onMyRegistrations">
+      <view class="menu-icon">📋</view>
+      <view class="menu-text">我的报名</view>
+      <view class="menu-arrow">›</view>
+    </view>
+    <view class="menu-row" bindtap="onMyOrders">
+      <view class="menu-icon">💳</view>
+      <view class="menu-text">我的订单</view>
+      <view class="menu-arrow">›</view>
+    </view>
+  </view>
+
+  <view class="menu-group">
+    <view class="menu-row" bindtap="onAbout">
+      <view class="menu-icon">ℹ️</view>
+      <view class="menu-text">关于我们</view>
+      <view class="menu-arrow">›</view>
+    </view>
+    <view class="menu-row" bindtap="onContact">
+      <view class="menu-icon">📞</view>
+      <view class="menu-text">联系客服</view>
+      <view class="menu-arrow">›</view>
+    </view>
+  </view>
+
+  <view class="version">远山平台 v1.0.0</view>
+</view>

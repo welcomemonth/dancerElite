@@ -1,4 +1,5 @@
 const api = require('../../utils/api.js');
+const app = getApp();
 
 Page({
   data: {
@@ -9,21 +10,48 @@ Page({
     pageSize: 10,
     total: 0,
     loading: false,
-    hasMore: true
+    hasMore: true,
+    noColumn: false
   },
 
   onLoad(options) {
-    const { columnId, columnName } = options;
+    // 兼容 navigateTo 传参（保留旧逻辑）
+    const { columnId, columnName } = options || {};
+    if (columnId) {
+      this.applyColumn(columnId, decodeURIComponent(columnName || ''));
+    }
+  },
+
+  // tabBar 页面每次显示都会触发 onShow，用于消费 home 写入的 pendingColumn
+  onShow() {
+    const pending = app.globalData && app.globalData.pendingColumn;
+    if (pending) {
+      app.globalData.pendingColumn = null;
+      this.applyColumn(pending.id, pending.name);
+      return;
+    }
+    if (!this.data.columnId) {
+      this.setData({ noColumn: true, loading: false });
+      wx.setNavigationBarTitle({ title: '文章' });
+    }
+  },
+
+  // 应用选中的栏目并加载第一页
+  applyColumn(columnId, columnName) {
     this.setData({
-      columnId: columnId,
-      columnName: decodeURIComponent(columnName || '')
+      columnId,
+      columnName,
+      articles: [],
+      page: 1,
+      hasMore: true,
+      noColumn: false
     });
-    
-    wx.setNavigationBarTitle({
-      title: this.data.columnName || '文章列表'
-    });
-    
+    wx.setNavigationBarTitle({ title: columnName || '文章列表' });
     this.loadArticles();
+  },
+
+  onGoSelectColumn() {
+    wx.switchTab({ url: '/pages/home/home' });
   },
 
   // 加载文章列表

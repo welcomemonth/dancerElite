@@ -1,16 +1,18 @@
 <template>
   <div class="role-management">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <span>角色管理</span>
-          <el-button type="primary" @click="showCreateDialog = true" v-permission="'role:create'">
-            <el-icon><Plus /></el-icon>
-            新增角色
-          </el-button>
-        </div>
-      </template>
+    <div class="page-header">
+      <div>
+        <h2 class="page-header__title">角色管理</h2>
+        <p class="page-header__desc">角色定义与菜单权限分配</p>
+      </div>
+      <div class="page-header__actions">
+        <el-button type="primary" :icon="Plus" @click="showCreateDialog = true" v-permission="'role:create'">
+          新增角色
+        </el-button>
+      </div>
+    </div>
 
+    <el-card>
       <el-table :data="roles" style="width: 100%" v-loading="loading">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="name" label="角色标识" width="150" />
@@ -28,21 +30,23 @@
             {{ formatDate(scope.row.created_at) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="300">
+        <el-table-column label="操作" width="320">
           <template #default="scope">
-            <el-button size="small" @click="editRole(scope.row)" v-permission="'role:update'">编辑</el-button>
-            <el-button size="small" type="warning" @click="managePermissions(scope.row)" v-permission="'role:menus'">权限</el-button>
-            <el-button 
-              size="small" 
+            <el-button text type="primary" :icon="Edit" @click="editRole(scope.row)" v-permission="'role:update'">编辑</el-button>
+            <el-button text type="warning" :icon="Key" @click="managePermissions(scope.row)" v-permission="'role:menus'">权限</el-button>
+            <el-button
+              text
               :type="scope.row.status === 1 ? 'warning' : 'success'"
+              :icon="scope.row.status === 1 ? Lock : Unlock"
               @click="toggleRoleStatus(scope.row)"
               v-permission="'role:update_status'"
             >
               {{ scope.row.status === 1 ? '禁用' : '启用' }}
             </el-button>
-            <el-button 
-              size="small" 
-              type="danger" 
+            <el-button
+              text
+              type="danger"
+              :icon="Delete"
               @click="deleteRole(scope.row)"
               v-permission="'role:delete'"
             >
@@ -157,7 +161,7 @@
 <script setup>
 import { computed, nextTick, ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Edit, Delete, Key, Lock, Unlock } from '@element-plus/icons-vue'
 import { roleApi, menuApi } from '../api'
 
 const loading = ref(false)
@@ -475,23 +479,18 @@ const typeTag = (type) => {
 
 <style scoped>
 .role-management {
-  padding: 20px;
-}
-
-.card-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
 }
 
 .pagination {
   display: flex;
-  justify-content: center;
-  margin-top: 20px;
+  justify-content: flex-end;
+  margin-top: var(--sp-5);
 }
 
 .permission-content {
-  padding: 20px 0;
+  padding: var(--sp-4) 0;
 }
 
 .permission-header {
@@ -499,12 +498,12 @@ const typeTag = (type) => {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 15px;
+  margin-bottom: var(--sp-4);
 }
 
 .permission-header h4 {
   margin: 0;
-  color: #303133;
+  color: var(--text-1);
 }
 
 .permission-actions {
@@ -513,11 +512,12 @@ const typeTag = (type) => {
 }
 
 .permission-tree {
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-md);
   padding: 10px;
   max-height: 460px;
   overflow-y: auto;
+  background: var(--bg-soft);
 }
 
 .permission-node {
@@ -532,15 +532,15 @@ const typeTag = (type) => {
 }
 
 .permission-code {
-  color: #909399;
-  font-family: monospace;
+  color: var(--text-3);
+  font-family: ui-monospace, monospace;
   font-size: 12px;
 }
 
 .permission-method {
-  color: #606266;
-  background: #f4f4f5;
-  border-radius: 4px;
+  color: var(--text-2);
+  background: var(--border-2);
+  border-radius: var(--r-sm);
   padding: 1px 6px;
   font-size: 12px;
 }

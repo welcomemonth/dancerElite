@@ -12,9 +12,9 @@ App({
               const pages = getCurrentPages();
               const currentPage = pages[pages.length - 1];
               
-              // 如果当前不在注册页，才跳转
+              // 如果当前不在注册页，才跳转（register 现在是 tabBar 页面，使用 switchTab）
               if (currentPage && currentPage.route !== 'pages/register/register') {
-                wx.redirectTo({ url: '/pages/register/register' });
+                wx.switchTab({ url: '/pages/register/register' });
               }
             }
           })
@@ -25,6 +25,7 @@ App({
     });
   },
   globalData: {
-    user: null
+    user: null,
+    pendingColumn: null
   }
 }); 

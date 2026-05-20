@@ -1,13 +1,17 @@
 <template>
-  <el-card>
-    <template #header>
-      <div style="display: flex; justify-content: space-between; align-items: center">
-        <span>{{ isEdit ? '编辑生成配置' : '新建生成配置' }}</span>
-        <el-button @click="$router.back()">返回</el-button>
+  <div class="codegen-edit">
+    <div class="page-header">
+      <div class="page-header__back">
+        <el-button text :icon="ArrowLeft" @click="$router.back()">返回</el-button>
+        <div>
+          <h2 class="page-header__title">{{ isEdit ? '编辑生成配置' : '新建生成配置' }}</h2>
+          <p class="page-header__desc">选择数据库表并配置字段，一键生成 CRUD 代码</p>
+        </div>
       </div>
-    </template>
+    </div>
 
-    <!-- 步骤条 -->
+    <el-card>
+      <!-- 步骤条 -->
     <el-steps :active="step" finish-status="success" style="margin-bottom: 24px">
       <el-step title="选择数据表" />
       <el-step title="配置字段" />
@@ -167,13 +171,15 @@
         </el-button>
       </div>
     </div>
-  </el-card>
+    </el-card>
+  </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { ArrowLeft } from '@element-plus/icons-vue'
 import { codegenApi, menuApi } from '../../api'
 
 const router = useRouter()
@@ -307,3 +313,15 @@ onMounted(async () => {
   }
 })
 </script>
+
+<style scoped>
+.codegen-edit {
+  display: flex;
+  flex-direction: column;
+}
+.page-header__back {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+</style>

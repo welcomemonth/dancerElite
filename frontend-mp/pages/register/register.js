@@ -1,27 +1,79 @@
 const api = require('../../utils/api.js');
 const app = getApp();
+
 Page({
   data: {
     phone: '',
-    name: ''
+    name: '',
+    focused: '',
+    submitting: false,
+    registered: false,
+    user: {}
   },
+
+  onShow() {
+    const user = (app.globalData && app.globalData.user) || {};
+    if (user.phone) {
+      this.setData({
+        registered: true,
+        user
+      });
+    } else {
+      this.setData({ registered: false });
+    }
+  },
+
+  onGoHome() {
+    wx.switchTab({ url: '/pages/home/home' });
+  },
+
+  onFocus(e) {
+    this.setData({ focused: e.currentTarget.dataset.field });
+  },
+
+  onBlur() {
+    this.setData({ focused: '' });
+  },
+
   onInputPhone(e) {
     this.setData({ phone: e.detail.value });
   },
+
   onInputName(e) {
     this.setData({ name: e.detail.value });
   },
+
   onSubmit() {
     const { phone, name } = this.data;
-    const openid = app.globalData.user.openid;
+    if (!phone || phone.length !== 11) {
+      wx.showToast({ title: '请输入正确的手机号', icon: 'none' });
+      return;
+    }
+    if (!name) {
+      wx.showToast({ title: '请输入昵称', icon: 'none' });
+      return;
+    }
+    const openid = app.globalData.user && app.globalData.user.openid;
+    if (!openid) {
+      wx.showToast({ title: '登录态丢失，请重启', icon: 'none' });
+      return;
+    }
+
+    this.setData({ submitting: true });
     api.register(phone, openid, name)
       .then((user) => {
-        // 更新全局用户信息
         app.globalData.user = { ...app.globalData.user, ...user };
-        wx.redirectTo({ url: '/pages/home/home' });
+        wx.showToast({ title: '注册成功', icon: 'success' });
+        setTimeout(() => {
+          // home 是 tabBar 页面，使用 switchTab
+          wx.switchTab({ url: '/pages/home/home' });
+        }, 600);
       })
       .catch((err) => {
-        wx.showToast({ title: err.toString(), icon: 'none' });
+        wx.showToast({ title: (err && err.toString()) || '注册失败', icon: 'none' });
+      })
+      .finally(() => {
+        this.setData({ submitting: false });
       });
   }
-}); 
+});

@@ -1,32 +1,33 @@
 <template>
   <div class="registration-list">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <span>报名管理</span>
-        </div>
-      </template>
-
-      <div class="filter-bar">
-        <el-select v-model="filter.activity_id" placeholder="选择活动" clearable @change="loadRegistrations">
-          <el-option label="全部活动" :value="0" />
-          <el-option
-            v-for="act in activities"
-            :key="act.id"
-            :label="act.title"
-            :value="act.id"
-          />
-        </el-select>
-        <el-select v-model="filter.status" placeholder="选择状态" @change="loadRegistrations">
-          <el-option label="全部" :value="-1" />
-          <el-option label="待支付" :value="0" />
-          <el-option label="已支付" :value="1" />
-          <el-option label="已取消" :value="2" />
-          <el-option label="已退款" :value="3" />
-        </el-select>
+    <div class="page-header">
+      <div>
+        <h2 class="page-header__title">报名管理</h2>
+        <p class="page-header__desc">活动报名记录、支付状态与详细信息查询</p>
       </div>
+    </div>
 
-      <el-table :data="registrations" stripe v-loading="loading">
+    <div class="filter-bar">
+      <el-select v-model="filter.activity_id" placeholder="选择活动" clearable @change="loadRegistrations" style="width: 220px">
+        <el-option label="全部活动" :value="0" />
+        <el-option
+          v-for="act in activities"
+          :key="act.id"
+          :label="act.title"
+          :value="act.id"
+        />
+      </el-select>
+      <el-select v-model="filter.status" placeholder="选择状态" @change="loadRegistrations" style="width: 140px">
+        <el-option label="全部状态" :value="-1" />
+        <el-option label="待支付" :value="0" />
+        <el-option label="已支付" :value="1" />
+        <el-option label="已取消" :value="2" />
+        <el-option label="已退款" :value="3" />
+      </el-select>
+    </div>
+
+    <el-card>
+      <el-table :data="registrations" v-loading="loading">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="activity_title" label="活动名称" show-overflow-tooltip />
         <el-table-column prop="name" label="报名人" width="120" />
@@ -45,7 +46,7 @@
         </el-table-column>
         <el-table-column label="操作" width="120">
           <template #default="scope">
-            <el-button size="small" @click="viewDetail(scope.row)" v-permission="'registration:get'">详情</el-button>
+            <el-button text type="primary" :icon="View" @click="viewDetail(scope.row)" v-permission="'registration:get'">详情</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -86,6 +87,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { View } from '@element-plus/icons-vue'
 import { registrationApi, activityApi } from '../../api'
 
 const registrations = ref([])
@@ -156,27 +158,17 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.card-header {
+.registration-list {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.filter-bar {
-  margin-bottom: 20px;
-}
-.filter-bar .el-select {
-  margin-right: 10px;
-}
-.el-pagination {
-  margin-top: 20px;
-  text-align: right;
+  flex-direction: column;
 }
 .extra-info {
   font-size: 12px;
-  background: #f5f7fa;
-  padding: 8px;
-  border-radius: 4px;
+  background: var(--bg-soft);
+  padding: 10px;
+  border-radius: var(--r-md);
   max-height: 200px;
   overflow: auto;
+  margin: 0;
 }
 </style>

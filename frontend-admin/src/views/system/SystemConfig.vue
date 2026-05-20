@@ -1,16 +1,17 @@
 <template>
   <div class="system-config">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <span>系统配置</span>
-          <div>
-            <el-button type="primary" @click="saveAll" :loading="saving" v-permission="'system_config:create'">保存所有修改</el-button>
-            <el-button @click="showAddDialog = true" v-permission="'system_config:create'">新增配置</el-button>
-          </div>
-        </div>
-      </template>
+    <div class="page-header">
+      <div>
+        <h2 class="page-header__title">系统配置</h2>
+        <p class="page-header__desc">系统级参数维护，修改后需保存全部</p>
+      </div>
+      <div class="page-header__actions">
+        <el-button :icon="Plus" @click="showAddDialog = true" v-permission="'system_config:create'">新增配置</el-button>
+        <el-button type="primary" :icon="DocumentChecked" @click="saveAll" :loading="saving" v-permission="'system_config:create'">保存所有修改</el-button>
+      </div>
+    </div>
 
+    <el-card>
       <!-- 分组 Tab -->
       <el-tabs v-model="activeGroup" @tab-click="onTabClick">
         <el-tab-pane label="全部" name="all" />
@@ -23,7 +24,7 @@
       </el-tabs>
 
       <!-- 配置列表 -->
-      <el-table :data="filteredConfigs" stripe v-loading="loading">
+      <el-table :data="filteredConfigs" v-loading="loading">
         <el-table-column prop="key" label="配置项" width="250">
           <template #default="scope">
             <div>
@@ -70,7 +71,7 @@
         </el-table-column>
         <el-table-column label="操作" width="100">
           <template #default="scope">
-            <el-button size="small" type="danger" @click="deleteConfig(scope.row)" v-permission="'system_config:delete'">删除</el-button>
+            <el-button text type="danger" :icon="Delete" @click="deleteConfig(scope.row)" v-permission="'system_config:delete'">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -113,6 +114,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus, Delete, DocumentChecked } from '@element-plus/icons-vue'
 import { systemConfigApi } from '../../api'
 
 const configs = ref([])
@@ -221,19 +223,18 @@ onMounted(() => loadConfigs())
 </script>
 
 <style scoped>
-.card-header {
+.system-config {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
 }
 .config-key {
-  font-family: monospace;
+  font-family: ui-monospace, monospace;
   font-weight: 600;
-  color: #409eff;
+  color: var(--brand-700);
 }
 .config-remark {
   font-size: 12px;
-  color: #999;
+  color: var(--text-3);
   margin-top: 2px;
 }
 </style>

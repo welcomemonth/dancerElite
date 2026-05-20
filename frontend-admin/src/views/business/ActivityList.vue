@@ -1,25 +1,30 @@
 <template>
   <div class="activity-list">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <span>活动管理</span>
-          <el-button type="primary" @click="createActivity" v-permission="'activity:create'">新增活动</el-button>
-        </div>
-      </template>
-
-      <div class="filter-bar">
-        <el-select v-model="filter.status" placeholder="选择状态" @change="loadActivities">
-          <el-option label="全部" :value="-1" />
-          <el-option label="草稿" :value="0" />
-          <el-option label="报名中" :value="1" />
-          <el-option label="报名截止" :value="2" />
-          <el-option label="进行中" :value="3" />
-          <el-option label="已结束" :value="4" />
-        </el-select>
+    <div class="page-header">
+      <div>
+        <h2 class="page-header__title">活动管理</h2>
+        <p class="page-header__desc">线下/线上活动发布与报名状态管理</p>
       </div>
+      <div class="page-header__actions">
+        <el-button type="primary" :icon="Plus" @click="createActivity" v-permission="'activity:create'">
+          新增活动
+        </el-button>
+      </div>
+    </div>
 
-      <el-table :data="activities" stripe v-loading="loading">
+    <div class="filter-bar">
+      <el-select v-model="filter.status" placeholder="选择状态" @change="loadActivities" style="width: 160px">
+        <el-option label="全部状态" :value="-1" />
+        <el-option label="草稿" :value="0" />
+        <el-option label="报名中" :value="1" />
+        <el-option label="报名截止" :value="2" />
+        <el-option label="进行中" :value="3" />
+        <el-option label="已结束" :value="4" />
+      </el-select>
+    </div>
+
+    <el-card>
+      <el-table :data="activities" v-loading="loading">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="title" label="活动名称" show-overflow-tooltip />
         <el-table-column prop="location" label="地点" width="150" show-overflow-tooltip />
@@ -30,7 +35,9 @@
         </el-table-column>
         <el-table-column prop="price" label="费用" width="100">
           <template #default="scope">
-            {{ scope.row.price > 0 ? `¥${scope.row.price}` : '免费' }}
+            <span :style="{ color: scope.row.price > 0 ? 'var(--brand-700)' : 'var(--success)', fontWeight: 600 }">
+              {{ scope.row.price > 0 ? `¥${scope.row.price}` : '免费' }}
+            </span>
           </template>
         </el-table-column>
         <el-table-column label="报名人数" width="120">
@@ -45,19 +52,20 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="250" fixed="right">
+        <el-table-column label="操作" width="260" fixed="right">
           <template #default="scope">
-            <el-button size="small" @click="editActivity(scope.row.id)" v-permission="'activity:update'">编辑</el-button>
+            <el-button text type="primary" :icon="Edit" @click="editActivity(scope.row.id)" v-permission="'activity:update'">编辑</el-button>
             <el-button
-              size="small"
+              text
               :type="scope.row.status === 1 ? 'warning' : 'success'"
+              :icon="scope.row.status === 1 ? VideoPause : VideoPlay"
               @click="toggleStatus(scope.row)"
               v-if="scope.row.status <= 1"
               v-permission="'activity:update_status'"
             >
               {{ scope.row.status === 1 ? '停止报名' : '开放报名' }}
             </el-button>
-            <el-button size="small" type="danger" @click="deleteActivity(scope.row)" v-if="scope.row.status === 0" v-permission="'activity:delete'">删除</el-button>
+            <el-button text type="danger" :icon="Delete" @click="deleteActivity(scope.row)" v-if="scope.row.status === 0" v-permission="'activity:delete'">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -79,6 +87,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus, Edit, Delete, VideoPlay, VideoPause } from '@element-plus/icons-vue'
 import { activityApi } from '../../api'
 
 const router = useRouter()
@@ -155,16 +164,8 @@ onMounted(() => loadActivities())
 </script>
 
 <style scoped>
-.card-header {
+.activity-list {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.filter-bar {
-  margin-bottom: 20px;
-}
-.el-pagination {
-  margin-top: 20px;
-  text-align: right;
+  flex-direction: column;
 }
 </style>

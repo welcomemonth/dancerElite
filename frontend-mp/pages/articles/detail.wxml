@@ -1,30 +1,58 @@
-<view class="container">
-  <!-- 加载中 -->
-  <view wx:if="{{loading}}" class="loading">
-    <text>加载中...</text>
+<view class="detail">
+  <!-- 加载骨架 -->
+  <view wx:if="{{loading}}" class="skeleton">
+    <view class="skeleton-line skeleton-line--xl skeleton-shimmer"></view>
+    <view class="skeleton-line skeleton-line--md skeleton-shimmer"></view>
+    <view class="skeleton-divider"></view>
+    <view class="skeleton-line skeleton-shimmer" wx:for="{{[1,2,3,4,5,6]}}" wx:key="*this"></view>
   </view>
-  
-  <!-- 文章内容 -->
+
+  <!-- 文章正文 -->
   <view wx:elif="{{article}}" class="article">
-    <!-- 文章头部 -->
-    <view class="article-header">
-      <view class="article-title">{{article.title}}</view>
-      <view class="article-meta">
-        <text class="meta-item">{{article.column_name}}</text>
-        <text class="meta-item">{{article.author || '佚名'}}</text>
-        <text class="meta-item">{{article.created_at}}</text>
-        <text class="meta-item">{{article.view_count || 0}}次浏览</text>
+    <view class="article__head">
+      <view class="article__column" wx:if="{{article.column_name}}">
+        <text class="tag tag-brand">{{article.column_name}}</text>
+      </view>
+      <view class="article__title">{{article.title}}</view>
+      <view class="article__meta">
+        <text>{{article.author || '佚名'}}</text>
+        <text class="meta-dot">·</text>
+        <text>{{article.created_at}}</text>
+        <text class="meta-dot">·</text>
+        <text>{{article.view_count || 0}} 次浏览</text>
       </view>
     </view>
-    
-    <!-- 文章正文 -->
-    <view class="article-content">
+
+    <view class="article__divider"></view>
+
+    <view class="article__body">
       <rich-text nodes="{{article.content}}" />
     </view>
+
+    <view class="article__footer">
+      <text>—— 全文完 ——</text>
+    </view>
   </view>
-  
+
   <!-- 空状态 -->
-  <view wx:else class="empty">
-    <text>文章不存在</text>
+  <view wx:else class="empty-state">
+    <view class="empty-state__icon">📄</view>
+    <text>文章不存在或已下架</text>
   </view>
-</view> 
+
+  <!-- 底部操作栏 -->
+  <view wx:if="{{article}}" class="action-bar">
+    <view class="action-item" bindtap="onLike">
+      <view class="action-icon">{{liked ? '❤️' : '🤍'}}</view>
+      <text class="action-text">点赞</text>
+    </view>
+    <view class="action-item" bindtap="onFavorite">
+      <view class="action-icon">{{favorited ? '⭐' : '☆'}}</view>
+      <text class="action-text">收藏</text>
+    </view>
+    <button class="action-share" open-type="share">
+      <view class="action-icon">↗</view>
+      <text class="action-text">分享</text>
+    </button>
+  </view>
+</view>

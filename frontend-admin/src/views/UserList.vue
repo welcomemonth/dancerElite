@@ -1,16 +1,16 @@
 <template>
   <div class="user-list">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <span>小程序用户</span>
-          <el-button @click="fetchUsers">
-            <el-icon><Refresh /></el-icon>
-            刷新
-          </el-button>
-        </div>
-      </template>
+    <div class="page-header">
+      <div>
+        <h2 class="page-header__title">小程序用户</h2>
+        <p class="page-header__desc">查看小程序终端用户列表与基本信息</p>
+      </div>
+      <div class="page-header__actions">
+        <el-button :icon="Refresh" @click="fetchUsers">刷新</el-button>
+      </div>
+    </div>
 
+    <el-card>
       <el-table :data="users" v-loading="loading" style="width: 100%">
         <el-table-column prop="id" label="ID" width="90" />
         <el-table-column prop="phone" label="手机号" min-width="140">
@@ -34,7 +34,7 @@
         </el-table-column>
         <el-table-column label="操作" width="120" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" @click="$router.push(`/admin/users/${row.id}`)" v-permission="'user:get'">详情</el-button>
+            <el-button text type="primary" :icon="View" @click="$router.push(`/admin/users/${row.id}`)" v-permission="'user:get'">详情</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -55,7 +55,7 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Refresh } from '@element-plus/icons-vue'
+import { Refresh, View } from '@element-plus/icons-vue'
 import { userApi } from '../api'
 
 const loading = ref(false)
@@ -89,12 +89,7 @@ onMounted(fetchUsers)
 
 <style scoped>
 .user-list {
-  padding: 20px;
-}
-
-.card-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
 }
 </style>
