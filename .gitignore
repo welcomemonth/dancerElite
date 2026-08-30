@@ -36,3 +36,6 @@ deploy/
 # embedded frontend build output
 internal/web/dist/*
 !internal/web/dist/.gitkeep
+
+*.db
+configs/config.yaml
