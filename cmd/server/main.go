@@ -44,6 +44,7 @@ func main() {
 		&model.Season{},
 		&model.Event{},
 		&model.EventResult{},
+		&model.AnnualRanking{},
 	); err != nil {
 		log.Fatalf("数据库迁移失败: %v", err)
 	}
