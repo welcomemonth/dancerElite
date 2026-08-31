@@ -18,11 +18,23 @@ import (
 var validate = validator.New()
 
 type Store struct {
-	cfg          *config.Config
-	UserRepo     UserRepo
-	PlayerRepo   PlayerRepo
-	ActivityRepo ActivityRepo
-	SeasonRepo   SeasonRepo
+	cfg                *config.Config
+	UserRepo           UserRepo
+	PlayerRepo         PlayerRepo
+	ActivityRepo       ActivityRepo
+	RegistrationRepo   RegistrationRepo
+	PaymentRepo        PaymentRepo
+	SeasonRepo         SeasonRepo
+	ArticleRepo        ArticleRepo
+	ColumnRepo         ColumnRepo
+	RoleRepo           RoleRepo
+	MenuRepo           MenuRepo
+	RoleMenuRepo       RoleMenuRepo
+	SystemConfigRepo   SystemConfigRepo
+	CodegenConfigRepo  CodegenConfigRepo
+	OperationLogRepo   OperationLogRepo
+	ActivityResultRepo ActivityResultRepo
+	AnnualRankingRepo  AnnualRankingRepo
 }
 
 func New(cfg *config.Config) (*Store, error) {
@@ -31,11 +43,23 @@ func New(cfg *config.Config) (*Store, error) {
 		return nil, err
 	}
 	return &Store{
-		UserRepo:     NewUserRepository(db),
-		PlayerRepo:   NewPlayerRepository(db),
-		ActivityRepo: NewActivityRepository(db),
-		SeasonRepo:   NewSeasonRepository(db),
-		cfg:          cfg,
+		UserRepo:           NewUserRepository(db),
+		PlayerRepo:         NewPlayerRepository(db),
+		ActivityRepo:       NewActivityRepository(db),
+		RegistrationRepo:   NewRegistrationRepository(db),
+		PaymentRepo:        NewPaymentRepository(db),
+		SeasonRepo:         NewSeasonRepository(db),
+		ArticleRepo:        NewArticleRepository(db),
+		ColumnRepo:         NewColumnRepository(db),
+		RoleRepo:           NewRoleRepository(db),
+		MenuRepo:           NewMenuRepository(db),
+		RoleMenuRepo:       NewRoleMenuRepository(db),
+		SystemConfigRepo:   NewSystemConfigRepository(db),
+		CodegenConfigRepo:  NewCodegenConfigRepository(db),
+		OperationLogRepo:   NewOperationLogRepository(db),
+		ActivityResultRepo: NewActivityResultRepository(db),
+		AnnualRankingRepo:  NewAnnualRankingRepository(db),
+		cfg:                cfg,
 	}, nil
 }
 
