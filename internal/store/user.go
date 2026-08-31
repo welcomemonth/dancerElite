@@ -11,12 +11,9 @@ import (
 
 // UserRepo 小程序用户数据访问接口
 type UserRepo interface {
-	Create(ctx context.Context, user *model.User) error
-	GetByID(ctx context.Context, id int64) (*model.User, error)
+	CRUD[model.User]
+	// GetByOpenID 根据 openid 查询用户
 	GetByOpenID(ctx context.Context, openID string) (*model.User, error)
-	Update(ctx context.Context, id int64, updates map[string]any) error
-	Delete(ctx context.Context, id int64) error
-	List(ctx context.Context, page, pageSize int, scopes ...func(*gorm.DB) *gorm.DB) ([]model.User, int64, error)
 }
 
 // UserRepository UserRepo 的默认实现，复用 BaseRepo 的通用 CRUD

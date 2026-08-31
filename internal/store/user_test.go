@@ -7,26 +7,14 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
 	"github.com/zzhtl/go-mountain/internal/model"
 )
 
-// newTestUserRepo 构建基于内存 sqlite 的 UserRepo。
-// 项目已有 sqlite 驱动，无需 mock，直接对真实 SQL 做集成测试。
 func newTestUserRepo(t *testing.T) UserRepo {
 	t.Helper()
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	require.NoError(t, err)
-
-	// 内存 sqlite 每个连接是独立库，限制为单连接避免"表不存在"
-	sqlDB, err := db.DB()
-	require.NoError(t, err)
-	sqlDB.SetMaxOpenConns(1)
-
-	require.NoError(t, db.AutoMigrate(&model.User{}))
-	return NewUserRepository(db)
+	return NewUserRepository(newTestDB(t, &model.User{}))
 }
 
 func seedUser(t *testing.T, repo UserRepo, openID, name string) *model.User {
