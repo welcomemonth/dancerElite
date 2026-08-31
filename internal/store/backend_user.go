@@ -5,8 +5,8 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/zzhtl/go-mountain/internal/model"
-	"github.com/zzhtl/go-mountain/internal/repository"
+	"github.com/welcomemonth/dancer-elite/internal/model"
+	"github.com/welcomemonth/dancer-elite/internal/repository"
 )
 
 // BackendUserListItem 后台用户列表项（含角色信息）

@@ -8,8 +8,8 @@ import (
 	"github.com/ArtisanCloud/PowerWeChat/v3/src/payment/notify/request"
 	"github.com/gin-gonic/gin"
 
-	"github.com/zzhtl/go-mountain/internal/pkg/response"
-	"github.com/zzhtl/go-mountain/internal/service"
+	"github.com/welcomemonth/dancer-elite/internal/pkg/response"
+	"github.com/welcomemonth/dancer-elite/internal/service"
 )
 
 // PaymentHandler 支付处理器

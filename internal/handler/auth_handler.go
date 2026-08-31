@@ -5,9 +5,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/zzhtl/go-mountain/internal/pkg/errcode"
-	"github.com/zzhtl/go-mountain/internal/pkg/response"
-	"github.com/zzhtl/go-mountain/internal/service"
+	"github.com/welcomemonth/dancer-elite/internal/pkg/errcode"
+	"github.com/welcomemonth/dancer-elite/internal/pkg/response"
+	"github.com/welcomemonth/dancer-elite/internal/service"
 )
 
 // AuthHandler 认证处理器

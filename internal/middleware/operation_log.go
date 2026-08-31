@@ -5,9 +5,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/zzhtl/go-mountain/internal/model"
-	"github.com/zzhtl/go-mountain/internal/service"
-	"github.com/zzhtl/go-mountain/internal/store"
+	"github.com/welcomemonth/dancer-elite/internal/model"
+	"github.com/welcomemonth/dancer-elite/internal/service"
+	"github.com/welcomemonth/dancer-elite/internal/store"
 )
 
 // OperationLogger 记录后台写操作日志

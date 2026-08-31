@@ -1,8 +1,8 @@
 package service
 
 import (
-	"github.com/zzhtl/go-mountain/internal/config"
-	"github.com/zzhtl/go-mountain/internal/store"
+	"github.com/welcomemonth/dancer-elite/internal/config"
+	"github.com/welcomemonth/dancer-elite/internal/store"
 )
 
 // APIV1Service 服务容器，聚合所有业务 service，统一注入 Store 和配置。

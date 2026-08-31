@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/zzhtl/go-mountain/internal/config"
-	"github.com/zzhtl/go-mountain/internal/model"
-	"github.com/zzhtl/go-mountain/internal/pkg/crypto"
-	"github.com/zzhtl/go-mountain/internal/service"
-	"github.com/zzhtl/go-mountain/internal/store"
+	"github.com/welcomemonth/dancer-elite/internal/config"
+	"github.com/welcomemonth/dancer-elite/internal/model"
+	"github.com/welcomemonth/dancer-elite/internal/pkg/crypto"
+	"github.com/welcomemonth/dancer-elite/internal/service"
+	"github.com/welcomemonth/dancer-elite/internal/store"
 )
 
 const defaultAdminPassword = "admin@123"

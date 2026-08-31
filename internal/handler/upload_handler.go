@@ -10,7 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/zzhtl/go-mountain/internal/pkg/response"
+	"github.com/welcomemonth/dancer-elite/internal/pkg/response"
 )
 
 // UploadHandler 文件上传处理器

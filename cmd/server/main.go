@@ -3,9 +3,9 @@ package main
 import (
 	"log"
 
-	"github.com/zzhtl/go-mountain/internal/config"
-	"github.com/zzhtl/go-mountain/internal/server"
-	"github.com/zzhtl/go-mountain/internal/store"
+	"github.com/welcomemonth/dancer-elite/internal/config"
+	"github.com/welcomemonth/dancer-elite/internal/server"
+	"github.com/welcomemonth/dancer-elite/internal/store"
 )
 
 func main() {

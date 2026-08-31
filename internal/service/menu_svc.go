@@ -5,9 +5,9 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/zzhtl/go-mountain/internal/model"
-	"github.com/zzhtl/go-mountain/internal/pkg/errcode"
-	"github.com/zzhtl/go-mountain/internal/store"
+	"github.com/welcomemonth/dancer-elite/internal/model"
+	"github.com/welcomemonth/dancer-elite/internal/pkg/errcode"
+	"github.com/welcomemonth/dancer-elite/internal/store"
 )
 
 // MenuService 菜单管理服务

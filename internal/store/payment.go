@@ -5,8 +5,8 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/zzhtl/go-mountain/internal/model"
-	"github.com/zzhtl/go-mountain/internal/repository"
+	"github.com/welcomemonth/dancer-elite/internal/model"
+	"github.com/welcomemonth/dancer-elite/internal/repository"
 )
 
 // PaymentRepo 支付记录数据访问接口

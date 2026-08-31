@@ -7,10 +7,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/zzhtl/go-mountain/internal/handler"
-	"github.com/zzhtl/go-mountain/internal/middleware"
-	"github.com/zzhtl/go-mountain/internal/service"
-	"github.com/zzhtl/go-mountain/internal/web"
+	"github.com/welcomemonth/dancer-elite/internal/handler"
+	"github.com/welcomemonth/dancer-elite/internal/middleware"
+	"github.com/welcomemonth/dancer-elite/internal/service"
+	"github.com/welcomemonth/dancer-elite/internal/web"
 )
 
 // Setup 配置所有路由

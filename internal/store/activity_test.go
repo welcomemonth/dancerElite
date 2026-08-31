@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 
-	"github.com/zzhtl/go-mountain/internal/model"
+	"github.com/welcomemonth/dancer-elite/internal/model"
 )
 
 func newTestActivityRepo(t *testing.T) (ActivityRepo, *gorm.DB) {

@@ -3,9 +3,9 @@ package service
 import (
 	"context"
 
-	"github.com/zzhtl/go-mountain/internal/model"
-	"github.com/zzhtl/go-mountain/internal/pkg/errcode"
-	"github.com/zzhtl/go-mountain/internal/store"
+	"github.com/welcomemonth/dancer-elite/internal/model"
+	"github.com/welcomemonth/dancer-elite/internal/pkg/errcode"
+	"github.com/welcomemonth/dancer-elite/internal/store"
 )
 
 // ActivityService 活动管理服务

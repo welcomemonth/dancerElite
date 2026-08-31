@@ -1,4 +1,4 @@
-module github.com/zzhtl/go-mountain
+module github.com/welcomemonth/dancer-elite
 
 go 1.25.0
 

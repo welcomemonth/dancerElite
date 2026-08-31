@@ -5,7 +5,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/zzhtl/go-mountain/internal/model"
+	"github.com/welcomemonth/dancer-elite/internal/model"
 )
 
 // RoleMenuRepo 角色-菜单关联数据访问接口（关联表，无通用 CRUD）

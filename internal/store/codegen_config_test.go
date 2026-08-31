@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 
-	"github.com/zzhtl/go-mountain/internal/model"
+	"github.com/welcomemonth/dancer-elite/internal/model"
 )
 
 func newTestCodegenConfigRepo(t *testing.T) CodegenConfigRepo {

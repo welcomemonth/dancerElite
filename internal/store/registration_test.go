@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 
-	"github.com/zzhtl/go-mountain/internal/model"
+	"github.com/welcomemonth/dancer-elite/internal/model"
 )
 
 func newTestRegistrationRepo(t *testing.T) (RegistrationRepo, *gorm.DB) {

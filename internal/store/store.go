@@ -11,8 +11,8 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/zzhtl/go-mountain/internal/config"
-	"github.com/zzhtl/go-mountain/internal/model"
+	"github.com/welcomemonth/dancer-elite/internal/config"
+	"github.com/welcomemonth/dancer-elite/internal/model"
 )
 
 type Store struct {

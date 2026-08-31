@@ -8,10 +8,10 @@ import (
 
 	"github.com/golang-jwt/jwt/v4"
 
-	"github.com/zzhtl/go-mountain/internal/model"
-	"github.com/zzhtl/go-mountain/internal/pkg/crypto"
-	"github.com/zzhtl/go-mountain/internal/pkg/errcode"
-	"github.com/zzhtl/go-mountain/internal/store"
+	"github.com/welcomemonth/dancer-elite/internal/model"
+	"github.com/welcomemonth/dancer-elite/internal/pkg/crypto"
+	"github.com/welcomemonth/dancer-elite/internal/pkg/errcode"
+	"github.com/welcomemonth/dancer-elite/internal/store"
 )
 
 // AuthService 认证服务

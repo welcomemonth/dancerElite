@@ -70,7 +70,7 @@ go-mountain/
 ### 1. 克隆项目
 
 ```bash
-git clone https://github.com/zzhtl/go-mountain.git
+git clone https://github.com/welcomemonth/dancer-elite.git
 cd go-mountain
 ```
 

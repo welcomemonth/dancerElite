@@ -6,9 +6,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/zzhtl/go-mountain/internal/model"
-	"github.com/zzhtl/go-mountain/internal/pkg/response"
-	"github.com/zzhtl/go-mountain/internal/service"
+	"github.com/welcomemonth/dancer-elite/internal/model"
+	"github.com/welcomemonth/dancer-elite/internal/pkg/response"
+	"github.com/welcomemonth/dancer-elite/internal/service"
 )
 
 // CodegenHandler 代码生成处理器
@@ -79,10 +79,10 @@ func (h *CodegenHandler) Get(c *gin.Context) {
 // Create 创建配置
 func (h *CodegenHandler) Create(c *gin.Context) {
 	var req struct {
-		TableName    string              `json:"table_name" binding:"required"`
-		ModuleName   string              `json:"module_name" binding:"required"`
-		DisplayName  string              `json:"display_name" binding:"required"`
-		ParentMenuID int64               `json:"parent_menu_id"`
+		TableName    string               `json:"table_name" binding:"required"`
+		ModuleName   string               `json:"module_name" binding:"required"`
+		DisplayName  string               `json:"display_name" binding:"required"`
+		ParentMenuID int64                `json:"parent_menu_id"`
 		Columns      []model.ColumnConfig `json:"columns" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -115,10 +115,10 @@ func (h *CodegenHandler) Update(c *gin.Context) {
 	}
 
 	var req struct {
-		TableName    string              `json:"table_name"`
-		ModuleName   string              `json:"module_name"`
-		DisplayName  string              `json:"display_name"`
-		ParentMenuID int64               `json:"parent_menu_id"`
+		TableName    string               `json:"table_name"`
+		ModuleName   string               `json:"module_name"`
+		DisplayName  string               `json:"display_name"`
+		ParentMenuID int64                `json:"parent_menu_id"`
 		Columns      []model.ColumnConfig `json:"columns"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {

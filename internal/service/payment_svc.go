@@ -14,9 +14,9 @@ import (
 	refundRequest "github.com/ArtisanCloud/PowerWeChat/v3/src/payment/refund/request"
 	"gorm.io/gorm"
 
-	"github.com/zzhtl/go-mountain/internal/model"
-	"github.com/zzhtl/go-mountain/internal/pkg/errcode"
-	"github.com/zzhtl/go-mountain/internal/store"
+	"github.com/welcomemonth/dancer-elite/internal/model"
+	"github.com/welcomemonth/dancer-elite/internal/pkg/errcode"
+	"github.com/welcomemonth/dancer-elite/internal/store"
 )
 
 // PaymentService 支付服务

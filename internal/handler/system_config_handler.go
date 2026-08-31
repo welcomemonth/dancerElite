@@ -3,9 +3,9 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/zzhtl/go-mountain/internal/model"
-	"github.com/zzhtl/go-mountain/internal/pkg/response"
-	"github.com/zzhtl/go-mountain/internal/service"
+	"github.com/welcomemonth/dancer-elite/internal/model"
+	"github.com/welcomemonth/dancer-elite/internal/pkg/response"
+	"github.com/welcomemonth/dancer-elite/internal/service"
 )
 
 // SystemConfigHandler 系统配置处理器

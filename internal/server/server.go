@@ -11,10 +11,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/zzhtl/go-mountain/internal/config"
-	"github.com/zzhtl/go-mountain/internal/router"
-	"github.com/zzhtl/go-mountain/internal/service"
-	"github.com/zzhtl/go-mountain/internal/store"
+	"github.com/welcomemonth/dancer-elite/internal/config"
+	"github.com/welcomemonth/dancer-elite/internal/router"
+	"github.com/welcomemonth/dancer-elite/internal/service"
+	"github.com/welcomemonth/dancer-elite/internal/store"
 )
 
 // Server 封装 HTTP 服务器
