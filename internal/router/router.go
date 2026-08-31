@@ -16,7 +16,7 @@ import (
 // Setup 配置所有路由
 func Setup(engine *gin.Engine, svc *service.APIV1Service) {
 	// 全局中间件
-	engine.Use(middleware.CORS())
+	engine.Use(middleware.RequestID(), middleware.GinLogger(), middleware.CORS())
 
 	// 设置最大文件上传大小
 	engine.MaxMultipartMemory = 50 << 20 // 50 MB

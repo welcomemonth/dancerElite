@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/spf13/viper"
+	"github.com/zzhtl/go-mountain/internal/pkg/logger"
 )
 
 // ServerConfig 服务器配置
@@ -68,5 +69,10 @@ func LoadConfig() (*Config, error) {
 	if err := viper.Unmarshal(&cfg); err != nil {
 		return nil, err
 	}
+	err = logger.Init(cfg.Server.Debug) // 日志组件初始化
+	if err != nil {
+		return nil, err
+	}
+
 	return &cfg, nil
 }

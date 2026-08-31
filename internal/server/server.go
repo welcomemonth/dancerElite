@@ -27,6 +27,10 @@ type Server struct {
 // NewServer 创建服务器实例
 func NewServer(st *store.Store, cfg *config.Config) *Server {
 	engine := gin.Default()
+	if !cfg.Server.Debug {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	server := &Server{
 		engine: engine,
 		cfg:    cfg,
