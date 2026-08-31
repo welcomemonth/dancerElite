@@ -10,29 +10,33 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 
 	"github.com/zzhtl/go-mountain/internal/config"
 	"github.com/zzhtl/go-mountain/internal/router"
+	"github.com/zzhtl/go-mountain/internal/service"
+	"github.com/zzhtl/go-mountain/internal/store"
 )
 
 // Server 封装 HTTP 服务器
 type Server struct {
-	engine *gin.Engine
-	db     *gorm.DB
-	cfg    *config.Config
+	engine    *gin.Engine
+	cfg       *config.Config
+	v1Service *service.APIV1Service
 }
 
 // NewServer 创建服务器实例
-func NewServer(db *gorm.DB, cfg *config.Config) *Server {
+func NewServer(st *store.Store, cfg *config.Config) *Server {
 	engine := gin.Default()
-	router.Setup(engine, db, cfg)
-
-	return &Server{
+	server := &Server{
 		engine: engine,
-		db:     db,
 		cfg:    cfg,
 	}
+	apiV1Service := service.NewAPIV1Service(cfg, st)
+	server.v1Service = apiV1Service
+
+	router.Setup(engine, apiV1Service)
+
+	return server
 }
 
 // Run 启动 HTTP 服务器（支持优雅关闭）
@@ -69,9 +73,7 @@ func (s *Server) Run() error {
 	}
 
 	// 关闭数据库连接
-	if sqlDB, err := s.db.DB(); err == nil {
-		sqlDB.Close()
-	}
+	s.v1Service.Store.Close()
 
 	log.Println("服务器已关闭")
 	return nil

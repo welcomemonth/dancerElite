@@ -15,21 +15,17 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/zzhtl/go-mountain/internal/model"
-	"github.com/zzhtl/go-mountain/internal/repository"
+	"github.com/zzhtl/go-mountain/internal/store"
 )
 
 // CodegenService 代码生成服务
 type CodegenService struct {
-	repo *repository.BaseRepo[model.CodegenConfig]
-	db   *gorm.DB
+	st *store.Store
 }
 
 // NewCodegenService 创建代码生成服务
-func NewCodegenService(db *gorm.DB) *CodegenService {
-	return &CodegenService{
-		repo: repository.NewBaseRepo[model.CodegenConfig](db),
-		db:   db,
-	}
+func NewCodegenService(st *store.Store) *CodegenService {
+	return &CodegenService{st: st}
 }
 
 // TableInfo 数据库表信息
@@ -72,9 +68,9 @@ func (s *CodegenService) GetTables(ctx context.Context) ([]TableInfo, error) {
 	var tables []TableInfo
 
 	var err error
-	switch s.db.Dialector.Name() {
+	switch s.st.DB().Dialector.Name() {
 	case "sqlite":
-		err = s.db.WithContext(ctx).Raw(`
+		err = s.st.DB().WithContext(ctx).Raw(`
 			SELECT name AS table_name, '' AS comment
 			FROM sqlite_master
 			WHERE type = 'table'
@@ -82,7 +78,7 @@ func (s *CodegenService) GetTables(ctx context.Context) ([]TableInfo, error) {
 			ORDER BY name
 		`).Scan(&tables).Error
 	default:
-		err = s.db.WithContext(ctx).Raw(`
+		err = s.st.DB().WithContext(ctx).Raw(`
 			SELECT c.relname AS table_name,
 			       COALESCE(pg_catalog.obj_description(c.oid, 'pg_class'), '') AS comment
 			FROM pg_catalog.pg_class c
@@ -111,7 +107,7 @@ func (s *CodegenService) GetTableColumns(ctx context.Context, tableName string) 
 	var columns []ColumnInfo
 
 	var err error
-	switch s.db.Dialector.Name() {
+	switch s.st.DB().Dialector.Name() {
 	case "sqlite":
 		var sqliteColumns []struct {
 			Name       string `gorm:"column:name"`
@@ -120,7 +116,7 @@ func (s *CodegenService) GetTableColumns(ctx context.Context, tableName string) 
 			DefaultVal string `gorm:"column:dflt_value"`
 			PrimaryKey int    `gorm:"column:pk"`
 		}
-		err = s.db.WithContext(ctx).
+		err = s.st.DB().WithContext(ctx).
 			Raw(fmt.Sprintf("PRAGMA table_info(%s)", quoteSQLiteIdentifier(tableName))).
 			Scan(&sqliteColumns).Error
 		for _, col := range sqliteColumns {
@@ -134,7 +130,7 @@ func (s *CodegenService) GetTableColumns(ctx context.Context, tableName string) 
 			})
 		}
 	default:
-		err = s.db.WithContext(ctx).Raw(`
+		err = s.st.DB().WithContext(ctx).Raw(`
 			SELECT
 				c.column_name AS field,
 				c.data_type AS type,
@@ -188,32 +184,32 @@ func (s *CodegenService) List(ctx context.Context, page, pageSize int) ([]model.
 	scope := func(db *gorm.DB) *gorm.DB {
 		return db.Order("created_at DESC")
 	}
-	return s.repo.List(ctx, page, pageSize, scope)
+	return s.st.CodegenConfigRepo.List(ctx, page, pageSize, scope)
 }
 
 // Get 获取单个配置
 func (s *CodegenService) Get(ctx context.Context, id int64) (*model.CodegenConfig, error) {
-	return s.repo.GetByID(ctx, id)
+	return s.st.CodegenConfigRepo.GetByID(ctx, id)
 }
 
 // Create 创建配置
 func (s *CodegenService) Create(ctx context.Context, config *model.CodegenConfig) error {
-	return s.repo.Create(ctx, config)
+	return s.st.CodegenConfigRepo.Create(ctx, config)
 }
 
 // Update 更新配置
 func (s *CodegenService) Update(ctx context.Context, id int64, updates map[string]any) error {
-	return s.repo.Update(ctx, id, updates)
+	return s.st.CodegenConfigRepo.Update(ctx, id, updates)
 }
 
 // Delete 删除配置
 func (s *CodegenService) Delete(ctx context.Context, id int64) error {
-	return s.repo.Delete(ctx, id)
+	return s.st.CodegenConfigRepo.Delete(ctx, id)
 }
 
 // Preview 预览生成的代码（不写文件）
 func (s *CodegenService) Preview(ctx context.Context, id int64) (*GeneratedCode, error) {
-	config, err := s.repo.GetByID(ctx, id)
+	config, err := s.st.CodegenConfigRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("配置不存在")
 	}
@@ -223,7 +219,7 @@ func (s *CodegenService) Preview(ctx context.Context, id int64) (*GeneratedCode,
 
 // Generate 生成代码并写入文件 + 创建菜单
 func (s *CodegenService) Generate(ctx context.Context, id int64) (*GeneratedCode, error) {
-	config, err := s.repo.GetByID(ctx, id)
+	config, err := s.st.CodegenConfigRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("配置不存在")
 	}
@@ -257,7 +253,7 @@ func (s *CodegenService) Generate(ctx context.Context, id int64) (*GeneratedCode
 
 	// 更新配置状态
 	now := time.Now()
-	s.repo.Update(ctx, id, map[string]any{
+	s.st.CodegenConfigRepo.Update(ctx, id, map[string]any{
 		"generated":    true,
 		"generated_at": &now,
 	})
@@ -273,7 +269,7 @@ func (s *CodegenService) createMenus(ctx context.Context, config *model.CodegenC
 
 	// 检查菜单是否已存在
 	var count int64
-	s.db.WithContext(ctx).Model(&model.Menu{}).
+	s.st.DB().WithContext(ctx).Model(&model.Menu{}).
 		Where("name = ? AND is_generated = true", "gen-"+routeName).
 		Count(&count)
 	if count > 0 {
@@ -292,7 +288,7 @@ func (s *CodegenService) createMenus(ctx context.Context, config *model.CodegenC
 			Status:      1,
 			IsGenerated: true,
 		}
-		if err := s.db.WithContext(ctx).Create(&dir).Error; err != nil {
+		if err := s.st.DB().WithContext(ctx).Create(&dir).Error; err != nil {
 			return err
 		}
 		parentID = dir.ID
@@ -311,7 +307,7 @@ func (s *CodegenService) createMenus(ctx context.Context, config *model.CodegenC
 		Status:      1,
 		IsGenerated: true,
 	}
-	if err := s.db.WithContext(ctx).Create(&listMenu).Error; err != nil {
+	if err := s.st.DB().WithContext(ctx).Create(&listMenu).Error; err != nil {
 		return err
 	}
 
@@ -340,20 +336,20 @@ func (s *CodegenService) createMenus(ctx context.Context, config *model.CodegenC
 			Status:      1,
 			IsGenerated: true,
 		}
-		s.db.WithContext(ctx).Create(&btn)
+		s.st.DB().WithContext(ctx).Create(&btn)
 	}
 
 	// 为 admin 角色分配新菜单
 	var adminRole model.Role
-	if err := s.db.WithContext(ctx).Where("name = ?", "admin").First(&adminRole).Error; err == nil {
+	if err := s.st.DB().WithContext(ctx).Where("name = ?", "admin").First(&adminRole).Error; err == nil {
 		var allNew []model.Menu
-		s.db.WithContext(ctx).Where("is_generated = true AND name LIKE ?", "gen-"+routeName+"%").Find(&allNew)
+		s.st.DB().WithContext(ctx).Where("is_generated = true AND name LIKE ?", "gen-"+routeName+"%").Find(&allNew)
 		for _, m := range allNew {
-			s.db.WithContext(ctx).FirstOrCreate(&model.RoleMenu{}, model.RoleMenu{RoleID: adminRole.ID, MenuID: m.ID})
+			s.st.DB().WithContext(ctx).FirstOrCreate(&model.RoleMenu{}, model.RoleMenu{RoleID: adminRole.ID, MenuID: m.ID})
 		}
 		// 如果创建了目录菜单，也分配
 		if config.ParentMenuID == 0 {
-			s.db.WithContext(ctx).FirstOrCreate(&model.RoleMenu{}, model.RoleMenu{RoleID: adminRole.ID, MenuID: parentID})
+			s.st.DB().WithContext(ctx).FirstOrCreate(&model.RoleMenu{}, model.RoleMenu{RoleID: adminRole.ID, MenuID: parentID})
 		}
 	}
 
@@ -657,27 +653,27 @@ func (s *{{.StructName}}Service) List(ctx context.Context, page, pageSize int{{i
 {{- end}}
 		return q
 	}
-	return s.repo.List(ctx, page, pageSize, scope)
+	return s.st.CodegenConfigRepo.List(ctx, page, pageSize, scope)
 }
 
 // Get 获取{{.DisplayName}}详情
 func (s *{{.StructName}}Service) Get(ctx context.Context, id int64) (*model.{{.StructName}}, error) {
-	return s.repo.GetByID(ctx, id)
+	return s.st.CodegenConfigRepo.GetByID(ctx, id)
 }
 
 // Create 创建{{.DisplayName}}
 func (s *{{.StructName}}Service) Create(ctx context.Context, entity *model.{{.StructName}}) error {
-	return s.repo.Create(ctx, entity)
+	return s.st.CodegenConfigRepo.Create(ctx, entity)
 }
 
 // Update 更新{{.DisplayName}}
 func (s *{{.StructName}}Service) Update(ctx context.Context, id int64, updates map[string]any) error {
-	return s.repo.Update(ctx, id, updates)
+	return s.st.CodegenConfigRepo.Update(ctx, id, updates)
 }
 
 // Delete 删除{{.DisplayName}}
 func (s *{{.StructName}}Service) Delete(ctx context.Context, id int64) error {
-	return s.repo.Delete(ctx, id)
+	return s.st.CodegenConfigRepo.Delete(ctx, id)
 }
 `
 

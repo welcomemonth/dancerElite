@@ -11,15 +11,15 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/zzhtl/go-mountain/internal/config"
+	"github.com/zzhtl/go-mountain/internal/model"
 )
 
-var validate = validator.New()
-
 type Store struct {
+	db                 *gorm.DB
 	cfg                *config.Config
 	UserRepo           UserRepo
+	BackendUserRepo    BackendUserRepo
 	PlayerRepo         PlayerRepo
 	ActivityRepo       ActivityRepo
 	RegistrationRepo   RegistrationRepo
@@ -42,8 +42,41 @@ func New(cfg *config.Config) (*Store, error) {
 	if err != nil {
 		return nil, err
 	}
+	// 开发模式则自动迁移表结构
+	if cfg.Server.Debug {
+		if err := db.AutoMigrate(
+			&model.BackendUser{},
+			&model.Role{},
+			&model.Menu{},
+			&model.RoleMenu{},
+			&model.Article{},
+			&model.Column{},
+			&model.User{},
+			&model.Activity{},
+			&model.Registration{},
+			&model.Payment{},
+			&model.CodegenConfig{},
+			&model.OperationLog{},
+			&model.SystemConfig{},
+
+			&model.Player{},
+			&model.Season{},
+			&model.ActivityResult{},
+			&model.AnnualRanking{},
+		); err != nil {
+			log.Fatalf("数据库迁移失败: %v", err)
+		}
+	}
+
+	return NewWithDB(db, cfg), nil
+}
+
+// NewWithDB 用已有的 GORM 连接装配 Store（表迁移由调用方控制，便于测试注入内存库）。
+func NewWithDB(db *gorm.DB, cfg *config.Config) *Store {
 	return &Store{
+		db:                 db,
 		UserRepo:           NewUserRepository(db),
+		BackendUserRepo:    NewBackendUserRepository(db),
 		PlayerRepo:         NewPlayerRepository(db),
 		ActivityRepo:       NewActivityRepository(db),
 		RegistrationRepo:   NewRegistrationRepository(db),
@@ -60,7 +93,7 @@ func New(cfg *config.Config) (*Store, error) {
 		ActivityResultRepo: NewActivityResultRepository(db),
 		AnnualRankingRepo:  NewAnnualRankingRepository(db),
 		cfg:                cfg,
-	}, nil
+	}
 }
 
 // Init 根据配置初始化 GORM 数据库连接
@@ -108,4 +141,16 @@ func newDB(cfg config.DatabaseConfig) (*gorm.DB, error) {
 	}
 
 	return db, nil
+}
+
+// DB 返回底层 GORM 连接，供事务、库内省等无法走 repo 的场景使用
+func (s *Store) DB() *gorm.DB { return s.db }
+
+// Close 关闭底层数据库连接
+func (s *Store) Close() error {
+	sqlDB, err := s.db.DB()
+	if err != nil {
+		return err
+	}
+	return sqlDB.Close()
 }

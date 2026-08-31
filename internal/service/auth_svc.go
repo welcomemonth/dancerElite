@@ -7,28 +7,28 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
-	"gorm.io/gorm"
 
 	"github.com/zzhtl/go-mountain/internal/model"
 	"github.com/zzhtl/go-mountain/internal/pkg/crypto"
 	"github.com/zzhtl/go-mountain/internal/pkg/errcode"
+	"github.com/zzhtl/go-mountain/internal/store"
 )
 
 // AuthService 认证服务
 type AuthService struct {
-	db        *gorm.DB
+	st        *store.Store
 	jwtSecret string
 }
 
 // NewAuthService 创建认证服务
-func NewAuthService(db *gorm.DB, jwtSecret string) *AuthService {
-	return &AuthService{db: db, jwtSecret: jwtSecret}
+func NewAuthService(st *store.Store, jwtSecret string) *AuthService {
+	return &AuthService{st: st, jwtSecret: jwtSecret}
 }
 
 // LoginResult 登录结果
 type LoginResult struct {
-	Token string         `json:"token"`
-	User  LoginUserInfo  `json:"user"`
+	Token string        `json:"token"`
+	User  LoginUserInfo `json:"user"`
 }
 
 // LoginUserInfo 登录用户信息
@@ -43,9 +43,8 @@ type LoginUserInfo struct {
 
 // Login 后台用户登录
 func (s *AuthService) Login(ctx context.Context, username, password string) (*LoginResult, error) {
-	var user model.BackendUser
-	if err := s.db.WithContext(ctx).Preload("Role").
-		Where("username = ?", username).First(&user).Error; err != nil {
+	user, err := s.st.BackendUserRepo.GetByUsername(ctx, username)
+	if err != nil {
 		return nil, errcode.ErrInvalidPassword
 	}
 
@@ -60,7 +59,7 @@ func (s *AuthService) Login(ctx context.Context, username, password string) (*Lo
 	// 渐进式密码迁移：SHA256 → bcrypt
 	if crypto.NeedsMigration(user.PasswordVersion) {
 		if newHash, err := crypto.HashPassword(password); err == nil {
-			s.db.WithContext(ctx).Model(&user).Updates(map[string]any{
+			s.st.BackendUserRepo.Update(ctx, user.ID, map[string]any{
 				"password":         newHash,
 				"password_version": 2,
 			})
@@ -69,10 +68,10 @@ func (s *AuthService) Login(ctx context.Context, username, password string) (*Lo
 
 	// 更新最后登录时间
 	now := time.Now()
-	s.db.WithContext(ctx).Model(&user).Update("last_login", now)
+	s.st.BackendUserRepo.Update(ctx, user.ID, map[string]any{"last_login": now})
 
 	// 生成 JWT
-	token, err := s.generateToken(&user)
+	token, err := s.generateToken(user)
 	if err != nil {
 		return nil, fmt.Errorf("生成令牌失败: %w", err)
 	}
@@ -99,8 +98,8 @@ func (s *AuthService) Login(ctx context.Context, username, password string) (*Lo
 
 // ChangePassword 修改密码
 func (s *AuthService) ChangePassword(ctx context.Context, userID int64, oldPassword, newPassword string) error {
-	var user model.BackendUser
-	if err := s.db.WithContext(ctx).First(&user, userID).Error; err != nil {
+	user, err := s.st.BackendUserRepo.GetByID(ctx, userID)
+	if err != nil {
 		return errcode.ErrNotFound
 	}
 
@@ -113,10 +112,10 @@ func (s *AuthService) ChangePassword(ctx context.Context, userID int64, oldPassw
 		return err
 	}
 
-	return s.db.WithContext(ctx).Model(&user).Updates(map[string]any{
+	return s.st.BackendUserRepo.Update(ctx, userID, map[string]any{
 		"password":         newHash,
 		"password_version": 2,
-	}).Error
+	})
 }
 
 // generateToken 生成 JWT 令牌

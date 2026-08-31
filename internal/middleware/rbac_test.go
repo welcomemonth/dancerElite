@@ -9,7 +9,9 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
+	"github.com/zzhtl/go-mountain/internal/config"
 	"github.com/zzhtl/go-mountain/internal/model"
+	"github.com/zzhtl/go-mountain/internal/store"
 )
 
 func TestRBACAuthAllowsMenuReadonlyAccess(t *testing.T) {
@@ -31,13 +33,15 @@ func TestRBACAuthAllowsMenuReadonlyAccess(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	st := store.NewWithDB(db, &config.Config{})
+
 	engine := gin.New()
 	engine.Use(func(c *gin.Context) {
 		c.Set("role", "editor")
 		c.Set("role_id", float64(2))
 		c.Next()
 	})
-	engine.Use(RBACAuth(db))
+	engine.Use(RBACAuth(st))
 	engine.GET("/api/admin/articles/", func(c *gin.Context) {
 		c.Status(http.StatusOK)
 	})

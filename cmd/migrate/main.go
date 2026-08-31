@@ -6,10 +6,10 @@ import (
 	"log"
 
 	"github.com/zzhtl/go-mountain/internal/config"
-	"github.com/zzhtl/go-mountain/internal/db"
 	"github.com/zzhtl/go-mountain/internal/model"
 	"github.com/zzhtl/go-mountain/internal/pkg/crypto"
 	"github.com/zzhtl/go-mountain/internal/service"
+	"github.com/zzhtl/go-mountain/internal/store"
 )
 
 const defaultAdminPassword = "admin@123"
@@ -20,15 +20,16 @@ func main() {
 		log.Fatalf("加载配置失败: %v", err)
 	}
 
-	database, err := db.Init(cfg.Database)
+	st, err := store.New(cfg)
 	if err != nil {
 		log.Fatalf("初始化数据库失败: %v", err)
 	}
+	defer st.Close()
 
 	log.Println("开始数据库迁移...")
 
 	// 自动迁移所有表结构
-	if err := database.AutoMigrate(
+	if err := st.DB().AutoMigrate(
 		&model.BackendUser{},
 		&model.Role{},
 		&model.Menu{},
@@ -55,7 +56,7 @@ func main() {
 	ctx := context.Background()
 
 	// 初始化默认角色
-	roleSvc := service.NewRoleService(database)
+	roleSvc := service.NewRoleService(st)
 	if err := roleSvc.InitDefaultRoles(ctx); err != nil {
 		log.Printf("初始化默认角色失败: %v", err)
 	} else {
@@ -63,7 +64,7 @@ func main() {
 	}
 
 	// 初始化默认菜单
-	menuSvc := service.NewMenuService(database)
+	menuSvc := service.NewMenuService(st)
 	if err := menuSvc.InitDefaultMenus(ctx); err != nil {
 		log.Printf("初始化默认菜单失败: %v", err)
 	} else {
@@ -72,10 +73,10 @@ func main() {
 
 	// 创建默认管理员账号（如果不存在）
 	var adminCount int64
-	database.Model(&model.BackendUser{}).Where("username = ?", "admin").Count(&adminCount)
+	st.DB().Model(&model.BackendUser{}).Where("username = ?", "admin").Count(&adminCount)
 	if adminCount == 0 {
 		var adminRole model.Role
-		if err := database.Where("name = ?", "admin").First(&adminRole).Error; err != nil {
+		if err := st.DB().Where("name = ?", "admin").First(&adminRole).Error; err != nil {
 			log.Printf("未找到 admin 角色: %v", err)
 		} else {
 			hashedPassword, err := crypto.HashPassword(defaultAdminPassword)
@@ -92,7 +93,7 @@ func main() {
 				Status:          1,
 			}
 
-			if err := database.Create(admin).Error; err != nil {
+			if err := st.DB().Create(admin).Error; err != nil {
 				log.Fatalf("创建管理员账号失败: %v", err)
 			}
 

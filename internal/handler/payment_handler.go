@@ -14,12 +14,14 @@ import (
 
 // PaymentHandler 支付处理器
 type PaymentHandler struct {
-	svc *service.PaymentService
+	svc    *service.PaymentService
+	regSvc *service.RegistrationService
+	actSvc *service.ActivityService
 }
 
 // NewPaymentHandler 创建支付处理器
-func NewPaymentHandler(svc *service.PaymentService) *PaymentHandler {
-	return &PaymentHandler{svc: svc}
+func NewPaymentHandler(svc *service.PaymentService, regSvc *service.RegistrationService, actSvc *service.ActivityService) *PaymentHandler {
+	return &PaymentHandler{svc: svc, regSvc: regSvc, actSvc: actSvc}
 }
 
 // List 获取支付记录列表（后台）
@@ -134,8 +136,7 @@ func (h *PaymentHandler) CreateOrder(c *gin.Context) {
 	openID, _ := c.Get("openid")
 
 	// 查询报名记录获取金额信息
-	regSvc := service.NewRegistrationService(h.svc.GetDB())
-	reg, err := regSvc.Get(c.Request.Context(), req.RegistrationID)
+	reg, err := h.regSvc.Get(c.Request.Context(), req.RegistrationID)
 	if err != nil {
 		response.NotFound(c, "报名记录不存在")
 		return
@@ -152,8 +153,7 @@ func (h *PaymentHandler) CreateOrder(c *gin.Context) {
 	}
 
 	// 获取活动信息
-	actSvc := service.NewActivityService(h.svc.GetDB())
-	activity, err := actSvc.Get(c.Request.Context(), reg.ActivityID)
+	activity, err := h.actSvc.Get(c.Request.Context(), reg.ActivityID)
 	if err != nil {
 		response.NotFound(c, "活动不存在")
 		return

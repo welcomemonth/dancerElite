@@ -10,7 +10,8 @@ import (
 
 // ServerConfig 服务器配置
 type ServerConfig struct {
-	Port int `mapstructure:"port"`
+	Port  int  `mapstructure:"port"`
+	Debug bool `mapstructure:"debug"`
 }
 
 // DatabaseConfig 数据库配置
@@ -26,13 +27,13 @@ type JWTConfig struct {
 
 // WechatConfig 微信小程序及支付配置
 type WechatConfig struct {
-	AppID            string `mapstructure:"app_id"`
-	Secret           string `mapstructure:"secret"`
-	MchID            string `mapstructure:"mch_id"`
-	MchAPIKey        string `mapstructure:"mch_api_key"`
-	MchSerialNo      string `mapstructure:"mch_serial_no"`
+	AppID             string `mapstructure:"app_id"`
+	Secret            string `mapstructure:"secret"`
+	MchID             string `mapstructure:"mch_id"`
+	MchAPIKey         string `mapstructure:"mch_api_key"`
+	MchSerialNo       string `mapstructure:"mch_serial_no"`
 	MchPrivateKeyPath string `mapstructure:"mch_private_key_path"`
-	NotifyURL        string `mapstructure:"notify_url"`
+	NotifyURL         string `mapstructure:"notify_url"`
 }
 
 // Config 全局配置
@@ -55,7 +56,7 @@ func LoadConfig() (*Config, error) {
 	exeDir := filepath.Dir(exePath)
 	viper.AddConfigPath(filepath.Join(exeDir, "configs"))
 	viper.AddConfigPath("configs")
-
+	viper.AddConfigPath("/opt/danceElite/configs")
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 

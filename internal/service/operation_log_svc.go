@@ -7,21 +7,17 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/zzhtl/go-mountain/internal/model"
-	"github.com/zzhtl/go-mountain/internal/repository"
+	"github.com/zzhtl/go-mountain/internal/store"
 )
 
 // OperationLogService 操作日志服务
 type OperationLogService struct {
-	repo *repository.BaseRepo[model.OperationLog]
-	db   *gorm.DB
+	st *store.Store
 }
 
 // NewOperationLogService 创建操作日志服务
-func NewOperationLogService(db *gorm.DB) *OperationLogService {
-	return &OperationLogService{
-		repo: repository.NewBaseRepo[model.OperationLog](db),
-		db:   db,
-	}
+func NewOperationLogService(st *store.Store) *OperationLogService {
+	return &OperationLogService{st: st}
 }
 
 // List 分页查询操作日志
@@ -38,12 +34,12 @@ func (s *OperationLogService) List(ctx context.Context, page, pageSize int, user
 		}
 		return db.Order("created_at DESC, id DESC")
 	}
-	return s.repo.List(ctx, page, pageSize, scope)
+	return s.st.OperationLogRepo.List(ctx, page, pageSize, scope)
 }
 
 // Create 写入操作日志
 func (s *OperationLogService) Create(ctx context.Context, log *model.OperationLog) error {
-	return s.db.WithContext(ctx).Create(log).Error
+	return s.st.OperationLogRepo.Create(ctx, log)
 }
 
 // ModuleFromPath 从后台 API 路径推导模块名

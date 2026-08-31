@@ -4,10 +4,10 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 
 	"github.com/zzhtl/go-mountain/internal/model"
 	"github.com/zzhtl/go-mountain/internal/pkg/response"
+	"github.com/zzhtl/go-mountain/internal/store"
 )
 
 // RBACAuth 基于角色的 API 权限校验中间件
@@ -16,7 +16,7 @@ import (
 //  2. 如果是 admin 角色，直接放行
 //  3. 根据请求路径和方法，匹配 menus 表中 type=3 的权限记录
 //  4. 查询 role_menus 关联表判断角色是否拥有该权限
-func RBACAuth(db *gorm.DB) gin.HandlerFunc {
+func RBACAuth(st *store.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 获取角色信息
 		roleName, exists := c.Get("role")
@@ -56,14 +56,14 @@ func RBACAuth(db *gorm.DB) gin.HandlerFunc {
 
 		// 查询角色是否拥有该 API 权限
 		var count int64
-		db.Model(&model.RoleMenu{}).
+		st.DB().Model(&model.RoleMenu{}).
 			Joins("INNER JOIN menus ON menus.id = role_menus.menu_id").
 			Where("role_menus.role_id = ? AND menus.permission = ? AND menus.type = 3 AND menus.status = 1",
 				roleID, permission).
 			Count(&count)
 
 		if count == 0 {
-			if !hasReadonlyMenuAccess(db, roleID, c.FullPath(), c.Request.Method) {
+			if !hasReadonlyMenuAccess(st, roleID, c.FullPath(), c.Request.Method) {
 				response.Forbidden(c, "无权限访问")
 				c.Abort()
 				return
@@ -123,7 +123,7 @@ func resolvePermission(path, method string) string {
 	return module + ":" + action
 }
 
-func hasReadonlyMenuAccess(db *gorm.DB, roleID int64, path, method string) bool {
+func hasReadonlyMenuAccess(st *store.Store, roleID int64, path, method string) bool {
 	if method != "GET" {
 		return false
 	}
@@ -140,7 +140,7 @@ func hasReadonlyMenuAccess(db *gorm.DB, roleID int64, path, method string) bool 
 	}
 
 	var count int64
-	db.Model(&model.RoleMenu{}).
+	st.DB().Model(&model.RoleMenu{}).
 		Joins("INNER JOIN menus ON menus.id = role_menus.menu_id").
 		Where("role_menus.role_id = ? AND menus.path = ? AND menus.type = 2 AND menus.status = 1",
 			roleID, "/admin/"+parts[0]).

@@ -6,25 +6,20 @@ import (
 	"sync"
 
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 
 	"github.com/zzhtl/go-mountain/internal/model"
-	"github.com/zzhtl/go-mountain/internal/repository"
+	"github.com/zzhtl/go-mountain/internal/store"
 )
 
 // SystemConfigService 系统配置服务
 type SystemConfigService struct {
-	repo  *repository.BaseRepo[model.SystemConfig]
-	db    *gorm.DB
+	st    *store.Store
 	cache sync.Map // 内存缓存，避免频繁读库
 }
 
 // NewSystemConfigService 创建系统配置服务
-func NewSystemConfigService(db *gorm.DB) *SystemConfigService {
-	svc := &SystemConfigService{
-		repo: repository.NewBaseRepo[model.SystemConfig](db),
-		db:   db,
-	}
+func NewSystemConfigService(st *store.Store) *SystemConfigService {
+	svc := &SystemConfigService{st: st}
 	// 启动时预加载所有配置到缓存
 	svc.ReloadCache(context.Background())
 	return svc
@@ -32,8 +27,8 @@ func NewSystemConfigService(db *gorm.DB) *SystemConfigService {
 
 // ReloadCache 重新加载缓存
 func (s *SystemConfigService) ReloadCache(ctx context.Context) {
-	var configs []model.SystemConfig
-	if err := s.db.WithContext(ctx).Find(&configs).Error; err != nil {
+	configs, err := s.st.SystemConfigRepo.FindAll(ctx)
+	if err != nil {
 		return
 	}
 	s.cache = sync.Map{}
@@ -47,8 +42,8 @@ func (s *SystemConfigService) GetValue(ctx context.Context, key string) string {
 	if v, ok := s.cache.Load(key); ok {
 		return v.(string)
 	}
-	var config model.SystemConfig
-	if err := s.db.WithContext(ctx).Where("`key` = ?", key).First(&config).Error; err != nil {
+	config, err := s.st.SystemConfigRepo.GetByKey(ctx, key)
+	if err != nil {
 		return ""
 	}
 	s.cache.Store(key, config.Value)
@@ -84,62 +79,47 @@ func (s *SystemConfigService) SetValue(ctx context.Context, key, value, typ, gro
 		Remark:    remark,
 	}
 
-	err := s.db.WithContext(ctx).Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "key"}},
-		DoUpdates: clause.AssignmentColumns([]string{"value", "type", "group_name", "remark", "updated_at"}),
-	}).Create(&config).Error
-
-	if err == nil {
-		s.cache.Store(key, value)
+	if err := s.st.SystemConfigRepo.Upsert(ctx, &config); err != nil {
+		return err
 	}
-	return err
+	s.cache.Store(key, value)
+	return nil
 }
 
 // BatchSet 批量设置配置
 func (s *SystemConfigService) BatchSet(ctx context.Context, configs []model.SystemConfig) error {
-	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		for _, c := range configs {
-			err := tx.Clauses(clause.OnConflict{
-				Columns:   []clause.Column{{Name: "key"}},
-				DoUpdates: clause.AssignmentColumns([]string{"value", "type", "group_name", "remark", "updated_at"}),
-			}).Create(&c).Error
-			if err != nil {
-				return err
-			}
-			s.cache.Store(c.Key, c.Value)
-		}
-		return nil
-	})
+	if err := s.st.SystemConfigRepo.BatchUpsert(ctx, configs); err != nil {
+		return err
+	}
+	for _, c := range configs {
+		s.cache.Store(c.Key, c.Value)
+	}
+	return nil
 }
 
 // List 获取所有配置
 func (s *SystemConfigService) List(ctx context.Context) ([]model.SystemConfig, error) {
-	var configs []model.SystemConfig
-	err := s.db.WithContext(ctx).Order("group_name, `key`").Find(&configs).Error
-	return configs, err
+	return s.st.SystemConfigRepo.FindAll(ctx, func(db *gorm.DB) *gorm.DB {
+		return db.Order("group_name, `key`")
+	})
 }
 
 // ListByGroup 按分组获取配置
 func (s *SystemConfigService) ListByGroup(ctx context.Context, groupName string) ([]model.SystemConfig, error) {
-	var configs []model.SystemConfig
-	err := s.db.WithContext(ctx).Where("group_name = ?", groupName).Order("`key`").Find(&configs).Error
-	return configs, err
+	return s.st.SystemConfigRepo.FindAll(ctx, func(db *gorm.DB) *gorm.DB {
+		return db.Where("group_name = ?", groupName).Order("`key`")
+	})
 }
 
 // GetGroups 获取所有分组名称
 func (s *SystemConfigService) GetGroups(ctx context.Context) ([]string, error) {
-	var groups []string
-	err := s.db.WithContext(ctx).Model(&model.SystemConfig{}).
-		Distinct("group_name").
-		Where("group_name != ''").
-		Pluck("group_name", &groups).Error
-	return groups, err
+	return s.st.SystemConfigRepo.ListGroups(ctx)
 }
 
 // Delete 删除配置项
 func (s *SystemConfigService) Delete(ctx context.Context, key string) error {
 	s.cache.Delete(key)
-	return s.db.WithContext(ctx).Where("`key` = ?", key).Delete(&model.SystemConfig{}).Error
+	return s.st.SystemConfigRepo.DeleteByKey(ctx, key)
 }
 
 // GetWechatPayConfig 获取微信支付相关配置（便捷方法）
@@ -178,11 +158,13 @@ func (s *SystemConfigService) InitDefaultConfigs(ctx context.Context) {
 
 	for _, d := range defaults {
 		// 仅在 key 不存在时插入
-		var count int64
-		s.db.WithContext(ctx).Model(&model.SystemConfig{}).Where("`key` = ?", d.Key).Count(&count)
-		if count == 0 {
-			s.db.WithContext(ctx).Create(&d)
-			s.cache.Store(d.Key, d.Value)
+		exists, _ := s.st.SystemConfigRepo.Exists(ctx, "`key` = ?", d.Key)
+		if exists {
+			continue
 		}
+		if err := s.st.SystemConfigRepo.Create(ctx, &d); err != nil {
+			continue
+		}
+		s.cache.Store(d.Key, d.Value)
 	}
 }

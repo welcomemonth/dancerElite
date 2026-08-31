@@ -16,28 +16,21 @@ import (
 
 	"github.com/zzhtl/go-mountain/internal/model"
 	"github.com/zzhtl/go-mountain/internal/pkg/errcode"
-	"github.com/zzhtl/go-mountain/internal/repository"
+	"github.com/zzhtl/go-mountain/internal/store"
 )
 
 // PaymentService 支付服务
 type PaymentService struct {
-	repo            *repository.BaseRepo[model.Payment]
-	db              *gorm.DB
+	st              *store.Store
 	systemConfigSvc *SystemConfigService
 }
 
 // NewPaymentService 创建支付服务
-func NewPaymentService(db *gorm.DB, systemConfigSvc *SystemConfigService) *PaymentService {
+func NewPaymentService(st *store.Store, systemConfigSvc *SystemConfigService) *PaymentService {
 	return &PaymentService{
-		repo:            repository.NewBaseRepo[model.Payment](db),
-		db:              db,
+		st:              st,
 		systemConfigSvc: systemConfigSvc,
 	}
-}
-
-// GetDB 返回数据库连接（供 handler 创建关联 service 使用）
-func (s *PaymentService) GetDB() *gorm.DB {
-	return s.db
 }
 
 // GetPaymentApp 根据数据库中的系统配置创建 PowerWeChat Payment 实例
@@ -87,41 +80,14 @@ func (s *PaymentService) GetPaymentApp(ctx context.Context) (*payment.Payment, e
 	return app, nil
 }
 
-// PaymentListItem 支付列表项
-type PaymentListItem struct {
-	model.Payment
-	UserName string `json:"user_name"`
-}
-
 // List 获取支付记录列表（后台管理）
-func (s *PaymentService) List(ctx context.Context, page, pageSize int, status int, bizType string) ([]PaymentListItem, int64, error) {
-	var (
-		list  []PaymentListItem
-		total int64
-	)
-
-	db := s.db.WithContext(ctx).Table("payments").
-		Where("payments.deleted_at IS NULL")
-
-	if status >= 0 {
-		db = db.Where("payments.status = ?", status)
-	}
-	if bizType != "" {
-		db = db.Where("payments.biz_type = ?", bizType)
-	}
-
-	if err := db.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-
-	offset := (page - 1) * pageSize
-	err := db.Select("payments.*").Order("payments.created_at DESC").Offset(offset).Limit(pageSize).Find(&list).Error
-	return list, total, err
+func (s *PaymentService) List(ctx context.Context, page, pageSize int, status int, bizType string) ([]model.Payment, int64, error) {
+	return s.st.PaymentRepo.ListByFilter(ctx, page, pageSize, status, bizType)
 }
 
 // Get 获取支付详情
 func (s *PaymentService) Get(ctx context.Context, id int64) (*model.Payment, error) {
-	return s.repo.GetByID(ctx, id)
+	return s.st.PaymentRepo.GetByID(ctx, id)
 }
 
 // GenerateOrderNo 生成订单号
@@ -182,7 +148,7 @@ func (s *PaymentService) CreatePrepayOrder(ctx context.Context, userID int64, am
 		BizID:    bizID,
 		PrepayID: prepayID,
 	}
-	if err := s.repo.Create(ctx, pay); err != nil {
+	if err := s.st.PaymentRepo.Create(ctx, pay); err != nil {
 		return nil, nil, err
 	}
 
@@ -197,7 +163,7 @@ func (s *PaymentService) CreatePrepayOrder(ctx context.Context, userID int64, am
 
 // HandleNotify 处理微信支付回调（由 handler 在验签解密后调用）
 func (s *PaymentService) HandleNotify(ctx context.Context, orderNo string, transactionID string, notifyData []byte) error {
-	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	return s.st.DB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// 查询支付记录
 		var pay model.Payment
 		if err := tx.Where("order_no = ?", orderNo).First(&pay).Error; err != nil {
@@ -238,8 +204,8 @@ func (s *PaymentService) HandleNotify(ctx context.Context, orderNo string, trans
 
 // RefundOrder 退款，调用微信退款接口
 func (s *PaymentService) RefundOrder(ctx context.Context, paymentID int64) error {
-	var pay model.Payment
-	if err := s.db.WithContext(ctx).First(&pay, paymentID).Error; err != nil {
+	pay, err := s.st.PaymentRepo.GetByID(ctx, paymentID)
+	if err != nil {
 		return errcode.ErrPaymentNotFound
 	}
 
@@ -273,9 +239,9 @@ func (s *PaymentService) RefundOrder(ctx context.Context, paymentID int64) error
 	}
 
 	now := time.Now()
-	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	return s.st.DB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// 更新支付状态
-		if err := tx.Model(&pay).Updates(map[string]any{
+		if err := tx.Model(pay).Updates(map[string]any{
 			"status":    2,
 			"refund_at": &now,
 		}).Error; err != nil {
@@ -297,11 +263,11 @@ func (s *PaymentService) RefundOrder(ctx context.Context, paymentID int64) error
 
 // GetByOrderNo 根据订单号查询支付记录
 func (s *PaymentService) GetByOrderNo(ctx context.Context, orderNo string) (*model.Payment, error) {
-	var pay model.Payment
-	if err := s.db.WithContext(ctx).Where("order_no = ?", orderNo).First(&pay).Error; err != nil {
+	pay, err := s.st.PaymentRepo.GetByOrderNo(ctx, orderNo)
+	if err != nil {
 		return nil, errcode.ErrPaymentNotFound
 	}
-	return &pay, nil
+	return pay, nil
 }
 
 // MarshalTransaction 将交易通知序列化为 JSON 用于存储

@@ -7,21 +7,17 @@ import (
 
 	"github.com/zzhtl/go-mountain/internal/model"
 	"github.com/zzhtl/go-mountain/internal/pkg/errcode"
-	"github.com/zzhtl/go-mountain/internal/repository"
+	"github.com/zzhtl/go-mountain/internal/store"
 )
 
 // MenuService 菜单管理服务
 type MenuService struct {
-	repo *repository.BaseRepo[model.Menu]
-	db   *gorm.DB
+	st *store.Store
 }
 
 // NewMenuService 创建菜单服务
-func NewMenuService(db *gorm.DB) *MenuService {
-	return &MenuService{
-		repo: repository.NewBaseRepo[model.Menu](db),
-		db:   db,
-	}
+func NewMenuService(st *store.Store) *MenuService {
+	return &MenuService{st: st}
 }
 
 // List 获取所有菜单
@@ -29,7 +25,7 @@ func (s *MenuService) List(ctx context.Context) ([]model.Menu, error) {
 	scope := func(db *gorm.DB) *gorm.DB {
 		return db.Order("sort, id")
 	}
-	return s.repo.FindAll(ctx, scope)
+	return s.st.MenuRepo.FindAll(ctx, scope)
 }
 
 // Tree 获取菜单树形结构
@@ -37,7 +33,7 @@ func (s *MenuService) Tree(ctx context.Context) ([]*model.Menu, error) {
 	scope := func(db *gorm.DB) *gorm.DB {
 		return db.Where("status = 1").Order("sort, id")
 	}
-	menus, err := s.repo.FindAll(ctx, scope)
+	menus, err := s.st.MenuRepo.FindAll(ctx, scope)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +42,7 @@ func (s *MenuService) Tree(ctx context.Context) ([]*model.Menu, error) {
 
 // Get 获取单个菜单
 func (s *MenuService) Get(ctx context.Context, id int64) (*model.Menu, error) {
-	return s.repo.GetByID(ctx, id)
+	return s.st.MenuRepo.GetByID(ctx, id)
 }
 
 // Create 创建菜单
@@ -55,54 +51,54 @@ func (s *MenuService) Create(ctx context.Context, menu *model.Menu) error {
 		menu.Type = 1
 	}
 	menu.Status = 1
-	return s.repo.Create(ctx, menu)
+	return s.st.MenuRepo.Create(ctx, menu)
 }
 
 // Update 更新菜单
 func (s *MenuService) Update(ctx context.Context, id int64, updates map[string]any) error {
-	return s.repo.Update(ctx, id, updates)
+	return s.st.MenuRepo.Update(ctx, id, updates)
 }
 
 // UpdateStatus 更新菜单状态
 func (s *MenuService) UpdateStatus(ctx context.Context, id int64, status int) error {
-	return s.repo.Update(ctx, id, map[string]any{"status": status})
+	return s.st.MenuRepo.Update(ctx, id, map[string]any{"status": status})
 }
 
 // Delete 删除菜单
 func (s *MenuService) Delete(ctx context.Context, id int64) error {
 	// 检查是否有子菜单
-	exists, _ := s.repo.Exists(ctx, "parent_id = ?", id)
+	exists, _ := s.st.MenuRepo.Exists(ctx, "parent_id = ?", id)
 	if exists {
 		return errcode.ErrMenuHasChildren
 	}
 	// 删除角色菜单关联
-	s.db.WithContext(ctx).Where("menu_id = ?", id).Delete(&model.RoleMenu{})
-	return s.repo.Delete(ctx, id)
+	s.st.DB().WithContext(ctx).Where("menu_id = ?", id).Delete(&model.RoleMenu{})
+	return s.st.MenuRepo.Delete(ctx, id)
 }
 
 // InitDefaultMenus 初始化默认菜单
 func (s *MenuService) InitDefaultMenus(ctx context.Context) error {
 	var count int64
-	s.db.WithContext(ctx).Model(&model.Menu{}).Count(&count)
+	s.st.DB().WithContext(ctx).Model(&model.Menu{}).Count(&count)
 	if count > 0 {
 		return s.ensureDefaultMenuPermissions(ctx)
 	}
 
 	// 内容管理目录
 	contentDir := model.Menu{ParentID: 0, Name: "content", Title: "内容管理", Path: "", Component: "", Icon: "Document", Sort: 1, Type: 1, Status: 1}
-	s.db.WithContext(ctx).Create(&contentDir)
+	s.st.DB().WithContext(ctx).Create(&contentDir)
 
 	contentMenus := []model.Menu{
 		{ParentID: contentDir.ID, Name: "articles", Title: "文章管理", Path: "/admin/articles", Component: "content/ArticleList", Icon: "Document", Sort: 1, Type: 2, Status: 1},
 		{ParentID: contentDir.ID, Name: "columns", Title: "栏目管理", Path: "/admin/columns", Component: "content/ColumnList", Icon: "Menu", Sort: 2, Type: 2, Status: 1},
 	}
 	for i := range contentMenus {
-		s.db.WithContext(ctx).Create(&contentMenus[i])
+		s.st.DB().WithContext(ctx).Create(&contentMenus[i])
 	}
 
 	// 业务管理目录
 	bizDir := model.Menu{ParentID: 0, Name: "business", Title: "业务管理", Path: "", Component: "", Icon: "ShoppingCart", Sort: 2, Type: 1, Status: 1}
-	s.db.WithContext(ctx).Create(&bizDir)
+	s.st.DB().WithContext(ctx).Create(&bizDir)
 
 	bizMenus := []model.Menu{
 		{ParentID: bizDir.ID, Name: "activities", Title: "活动管理", Path: "/admin/activities", Component: "business/ActivityList", Icon: "Calendar", Sort: 1, Type: 2, Status: 1},
@@ -110,12 +106,12 @@ func (s *MenuService) InitDefaultMenus(ctx context.Context) error {
 		{ParentID: bizDir.ID, Name: "payments", Title: "支付管理", Path: "/admin/payments", Component: "business/PaymentList", Icon: "Money", Sort: 3, Type: 2, Status: 1},
 	}
 	for i := range bizMenus {
-		s.db.WithContext(ctx).Create(&bizMenus[i])
+		s.st.DB().WithContext(ctx).Create(&bizMenus[i])
 	}
 
 	// 系统管理目录
 	sysDir := model.Menu{ParentID: 0, Name: "system", Title: "系统管理", Path: "", Component: "", Icon: "Setting", Sort: 3, Type: 1, Status: 1}
-	s.db.WithContext(ctx).Create(&sysDir)
+	s.st.DB().WithContext(ctx).Create(&sysDir)
 
 	sysMenus := []model.Menu{
 		{ParentID: sysDir.ID, Name: "mp-users", Title: "小程序用户", Path: "/admin/users", Component: "system/UserList", Icon: "User", Sort: 1, Type: 2, Status: 1},
@@ -126,15 +122,15 @@ func (s *MenuService) InitDefaultMenus(ctx context.Context) error {
 		{ParentID: sysDir.ID, Name: "system-configs", Title: "系统配置", Path: "/admin/system-configs", Component: "system/SystemConfigList", Icon: "Tools", Sort: 6, Type: 2, Status: 1},
 	}
 	for i := range sysMenus {
-		s.db.WithContext(ctx).Create(&sysMenus[i])
+		s.st.DB().WithContext(ctx).Create(&sysMenus[i])
 	}
 
 	// 代码生成器
 	codegenDir := model.Menu{ParentID: 0, Name: "codegen", Title: "代码生成", Path: "", Component: "", Icon: "Cpu", Sort: 4, Type: 1, Status: 1}
-	s.db.WithContext(ctx).Create(&codegenDir)
+	s.st.DB().WithContext(ctx).Create(&codegenDir)
 
 	codegenMenu := model.Menu{ParentID: codegenDir.ID, Name: "codegen-config", Title: "生成配置", Path: "/admin/codegen", Component: "codegen/CodegenList", Icon: "Cpu", Sort: 1, Type: 2, Status: 1}
-	s.db.WithContext(ctx).Create(&codegenMenu)
+	s.st.DB().WithContext(ctx).Create(&codegenMenu)
 
 	return s.ensureDefaultMenuPermissions(ctx)
 }
@@ -234,7 +230,7 @@ func (s *MenuService) ensureDefaultMenuPermissions(ctx context.Context) error {
 
 	for menuName, items := range permissions {
 		var parent model.Menu
-		if err := s.db.WithContext(ctx).Where("name = ? AND type = 2", menuName).First(&parent).Error; err != nil {
+		if err := s.st.DB().WithContext(ctx).Where("name = ? AND type = 2", menuName).First(&parent).Error; err != nil {
 			continue
 		}
 
@@ -242,7 +238,7 @@ func (s *MenuService) ensureDefaultMenuPermissions(ctx context.Context) error {
 		for _, item := range items {
 			permission := module + ":" + item.Action
 			var count int64
-			s.db.WithContext(ctx).Model(&model.Menu{}).
+			s.st.DB().WithContext(ctx).Model(&model.Menu{}).
 				Where("parent_id = ? AND permission = ? AND type = 3", parent.ID, permission).
 				Count(&count)
 			if count > 0 {
@@ -259,7 +255,7 @@ func (s *MenuService) ensureDefaultMenuPermissions(ctx context.Context) error {
 				Method:     item.Method,
 				Status:     1,
 			}
-			if err := s.db.WithContext(ctx).Create(&menu).Error; err != nil {
+			if err := s.st.DB().WithContext(ctx).Create(&menu).Error; err != nil {
 				return err
 			}
 		}
@@ -290,24 +286,24 @@ func permissionModule(menuName string) string {
 
 func (s *MenuService) assignAllMenusToAdmin(ctx context.Context) error {
 	var adminRole model.Role
-	if err := s.db.WithContext(ctx).Where("name = ?", "admin").First(&adminRole).Error; err != nil {
+	if err := s.st.DB().WithContext(ctx).Where("name = ?", "admin").First(&adminRole).Error; err != nil {
 		return nil
 	}
 
 	var allMenus []model.Menu
-	if err := s.db.WithContext(ctx).Find(&allMenus).Error; err != nil {
+	if err := s.st.DB().WithContext(ctx).Find(&allMenus).Error; err != nil {
 		return err
 	}
 
 	for _, menu := range allMenus {
 		var count int64
-		s.db.WithContext(ctx).Model(&model.RoleMenu{}).
+		s.st.DB().WithContext(ctx).Model(&model.RoleMenu{}).
 			Where("role_id = ? AND menu_id = ?", adminRole.ID, menu.ID).
 			Count(&count)
 		if count > 0 {
 			continue
 		}
-		if err := s.db.WithContext(ctx).Create(&model.RoleMenu{RoleID: adminRole.ID, MenuID: menu.ID}).Error; err != nil {
+		if err := s.st.DB().WithContext(ctx).Create(&model.RoleMenu{RoleID: adminRole.ID, MenuID: menu.ID}).Error; err != nil {
 			return err
 		}
 	}

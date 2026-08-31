@@ -4,14 +4,14 @@ import (
 	"encoding/json"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 
 	"github.com/zzhtl/go-mountain/internal/model"
 	"github.com/zzhtl/go-mountain/internal/service"
+	"github.com/zzhtl/go-mountain/internal/store"
 )
 
 // OperationLogger 记录后台写操作日志
-func OperationLogger(db *gorm.DB) gin.HandlerFunc {
+func OperationLogger(st *store.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		method := c.Request.Method
 		if method != "POST" && method != "PUT" && method != "PATCH" && method != "DELETE" {
@@ -43,7 +43,7 @@ func OperationLogger(db *gorm.DB) gin.HandlerFunc {
 			UserAgent:  c.Request.UserAgent(),
 			Detail:     detail,
 		}
-		_ = db.WithContext(c.Request.Context()).Create(log).Error
+		_ = st.OperationLogRepo.Create(c.Request.Context(), log)
 	}
 }
 

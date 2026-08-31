@@ -6,9 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 
-	"github.com/zzhtl/go-mountain/internal/config"
 	"github.com/zzhtl/go-mountain/internal/handler"
 	"github.com/zzhtl/go-mountain/internal/middleware"
 	"github.com/zzhtl/go-mountain/internal/service"
@@ -16,7 +14,7 @@ import (
 )
 
 // Setup 配置所有路由
-func Setup(engine *gin.Engine, db *gorm.DB, cfg *config.Config) {
+func Setup(engine *gin.Engine, svc *service.APIV1Service) {
 	// 全局中间件
 	engine.Use(middleware.CORS())
 
@@ -34,38 +32,21 @@ func Setup(engine *gin.Engine, db *gorm.DB, cfg *config.Config) {
 		c.JSON(200, gin.H{"message": "pong"})
 	})
 
-	// 创建 services
-	authSvc := service.NewAuthService(db, cfg.JWT.Secret)
-	backendUserSvc := service.NewBackendUserService(db)
-	articleSvc := service.NewArticleService(db)
-	columnSvc := service.NewColumnService(db)
-	roleSvc := service.NewRoleService(db)
-	menuSvc := service.NewMenuService(db)
-	userSvc := service.NewUserService(db, cfg.Wechat.AppID, cfg.Wechat.Secret)
-	activitySvc := service.NewActivityService(db)
-	registrationSvc := service.NewRegistrationService(db)
-	systemConfigSvc := service.NewSystemConfigService(db)
-	paymentSvc := service.NewPaymentService(db, systemConfigSvc)
-	codegenSvc := service.NewCodegenService(db)
-	operationLogSvc := service.NewOperationLogService(db)
+	registerMiniProgramRoutes(api, svc)
+	registerAdminRoutes(api, svc)
 
-	// 创建 handlers
-	authHandler := handler.NewAuthHandler(authSvc)
-	backendUserHandler := handler.NewBackendUserHandler(backendUserSvc)
-	articleHandler := handler.NewArticleHandler(articleSvc)
-	columnHandler := handler.NewColumnHandler(columnSvc)
-	roleHandler := handler.NewRoleHandler(roleSvc)
-	menuHandler := handler.NewMenuHandler(menuSvc)
-	userHandler := handler.NewUserHandler(userSvc)
-	uploadHandler := handler.NewUploadHandler()
-	activityHandler := handler.NewActivityHandler(activitySvc)
-	registrationHandler := handler.NewRegistrationHandler(registrationSvc)
-	paymentHandler := handler.NewPaymentHandler(paymentSvc)
-	systemConfigHandler := handler.NewSystemConfigHandler(systemConfigSvc)
-	codegenHandler := handler.NewCodegenHandler(codegenSvc)
-	operationLogHandler := handler.NewOperationLogHandler(operationLogSvc)
+	setupAdminUI(engine)
+}
 
-	// ==================== 小程序 API ====================
+// registerMiniProgramRoutes 小程序端 API + 微信支付回调
+func registerMiniProgramRoutes(api *gin.RouterGroup, svc *service.APIV1Service) {
+	userHandler := handler.NewUserHandler(svc.User)
+	columnHandler := handler.NewColumnHandler(svc.Column)
+	articleHandler := handler.NewArticleHandler(svc.Article)
+	activityHandler := handler.NewActivityHandler(svc.Activity)
+	registrationHandler := handler.NewRegistrationHandler(svc.Registration)
+	paymentHandler := handler.NewPaymentHandler(svc.Payment, svc.Registration, svc.Activity)
+
 	mp := api.Group("/mp")
 	{
 		mp.POST("/login", userHandler.WechatLogin)
@@ -85,7 +66,7 @@ func Setup(engine *gin.Engine, db *gorm.DB, cfg *config.Config) {
 
 		// 需要小程序用户认证的接口
 		mpAuth := mp.Group("")
-		mpAuth.Use(middleware.JWTAuth(cfg.JWT.Secret))
+		mpAuth.Use(middleware.JWTAuth(svc.Cfg.JWT.Secret))
 		{
 			// 报名
 			mpAuth.POST("/registrations", registrationHandler.Create)
@@ -100,8 +81,25 @@ func Setup(engine *gin.Engine, db *gorm.DB, cfg *config.Config) {
 
 	// 微信支付回调（不需要任何认证）
 	api.POST("/payment/wechat/notify", paymentHandler.WechatNotify)
+}
 
-	// ==================== 后台 API ====================
+// registerAdminRoutes 后台管理端 API
+func registerAdminRoutes(api *gin.RouterGroup, svc *service.APIV1Service) {
+	authHandler := handler.NewAuthHandler(svc.Auth)
+	backendUserHandler := handler.NewBackendUserHandler(svc.BackendUser)
+	articleHandler := handler.NewArticleHandler(svc.Article)
+	columnHandler := handler.NewColumnHandler(svc.Column)
+	roleHandler := handler.NewRoleHandler(svc.Role)
+	menuHandler := handler.NewMenuHandler(svc.Menu)
+	userHandler := handler.NewUserHandler(svc.User)
+	uploadHandler := handler.NewUploadHandler()
+	activityHandler := handler.NewActivityHandler(svc.Activity)
+	registrationHandler := handler.NewRegistrationHandler(svc.Registration)
+	paymentHandler := handler.NewPaymentHandler(svc.Payment, svc.Registration, svc.Activity)
+	systemConfigHandler := handler.NewSystemConfigHandler(svc.SystemConfig)
+	codegenHandler := handler.NewCodegenHandler(svc.Codegen)
+	operationLogHandler := handler.NewOperationLogHandler(svc.OperationLog)
+
 	admin := api.Group("/admin")
 
 	// 认证路由（不需要 JWT）
@@ -112,9 +110,9 @@ func Setup(engine *gin.Engine, db *gorm.DB, cfg *config.Config) {
 
 	// 需要 JWT 认证 + RBAC 权限校验的路由
 	adminAuth := admin.Group("")
-	adminAuth.Use(middleware.JWTAuth(cfg.JWT.Secret))
-	adminAuth.Use(middleware.RBACAuth(db))
-	adminAuth.Use(middleware.OperationLogger(db))
+	adminAuth.Use(middleware.JWTAuth(svc.Cfg.JWT.Secret))
+	adminAuth.Use(middleware.RBACAuth(svc.Store))
+	adminAuth.Use(middleware.OperationLogger(svc.Store))
 	{
 		// 修改密码
 		adminAuth.PUT("/backend-auth/change-password", authHandler.ChangePassword)
@@ -224,8 +222,6 @@ func Setup(engine *gin.Engine, db *gorm.DB, cfg *config.Config) {
 		upload.POST("/image", uploadHandler.UploadImage)
 		upload.POST("/video", uploadHandler.UploadVideo)
 	}
-
-	setupAdminUI(engine)
 }
 
 func setupAdminUI(engine *gin.Engine) {

@@ -2,28 +2,27 @@ package service
 
 import (
 	"context"
+	"errors"
 
 	"github.com/ArtisanCloud/PowerWeChat/v3/src/miniProgram"
 	"gorm.io/gorm"
 
 	"github.com/zzhtl/go-mountain/internal/model"
 	"github.com/zzhtl/go-mountain/internal/pkg/errcode"
-	"github.com/zzhtl/go-mountain/internal/repository"
+	"github.com/zzhtl/go-mountain/internal/store"
 )
 
 // UserService 小程序用户管理服务
 type UserService struct {
-	repo      *repository.BaseRepo[model.User]
-	db        *gorm.DB
+	st        *store.Store
 	appID     string
 	appSecret string
 }
 
 // NewUserService 创建小程序用户服务
-func NewUserService(db *gorm.DB, appID, appSecret string) *UserService {
+func NewUserService(st *store.Store, appID, appSecret string) *UserService {
 	return &UserService{
-		repo:      repository.NewBaseRepo[model.User](db),
-		db:        db,
+		st:        st,
 		appID:     appID,
 		appSecret: appSecret,
 	}
@@ -49,45 +48,46 @@ func (s *UserService) WechatLogin(ctx context.Context, code string) (*model.User
 	openID := session.OpenID
 
 	// 查询或创建用户
-	var user model.User
-	err = s.db.WithContext(ctx).Where("open_id = ?", openID).First(&user).Error
-	if err != nil {
-		user = model.User{OpenID: openID, Status: 1}
-		if err := s.db.WithContext(ctx).Create(&user).Error; err != nil {
+	user, err := s.st.UserRepo.GetByOpenID(ctx, openID)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		user = &model.User{OpenID: openID, Status: 1}
+		if err := s.st.UserRepo.Create(ctx, user); err != nil {
 			return nil, err
 		}
+	} else if err != nil {
+		return nil, err
 	}
 
-	return &user, nil
+	return user, nil
 }
 
 // Register 注册/绑定手机号
 func (s *UserService) Register(ctx context.Context, phone, openID, name string) (*model.User, error) {
-	var user model.User
-
 	// 通过 openid 查找用户
-	err := s.db.WithContext(ctx).Where("open_id = ?", openID).First(&user).Error
-	if err != nil {
+	user, err := s.st.UserRepo.GetByOpenID(ctx, openID)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		// 不存在则创建
-		user = model.User{
+		user = &model.User{
 			OpenID: openID,
 			Phone:  phone,
 			Name:   name,
 			Status: 1,
 		}
-		if err := s.db.WithContext(ctx).Create(&user).Error; err != nil {
+		if err := s.st.UserRepo.Create(ctx, user); err != nil {
 			return nil, err
 		}
-		return &user, nil
+		return user, nil
+	} else if err != nil {
+		return nil, err
 	}
 
 	// 已存在则更新
-	s.db.WithContext(ctx).Model(&user).Updates(map[string]any{
+	s.st.UserRepo.Update(ctx, user.ID, map[string]any{
 		"phone": phone,
 		"name":  name,
 	})
 
-	return &user, nil
+	return user, nil
 }
 
 // List 获取小程序用户列表（后台）
@@ -95,12 +95,12 @@ func (s *UserService) List(ctx context.Context, page, pageSize int) ([]model.Use
 	scope := func(db *gorm.DB) *gorm.DB {
 		return db.Order("created_at DESC")
 	}
-	return s.repo.List(ctx, page, pageSize, scope)
+	return s.st.UserRepo.List(ctx, page, pageSize, scope)
 }
 
 // Get 获取用户详情
 func (s *UserService) Get(ctx context.Context, id int64) (*model.User, error) {
-	user, err := s.repo.GetByID(ctx, id)
+	user, err := s.st.UserRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, errcode.ErrNotFound
 	}
@@ -109,10 +109,10 @@ func (s *UserService) Get(ctx context.Context, id int64) (*model.User, error) {
 
 // Update 更新用户信息
 func (s *UserService) Update(ctx context.Context, id int64, updates map[string]any) error {
-	return s.repo.Update(ctx, id, updates)
+	return s.st.UserRepo.Update(ctx, id, updates)
 }
 
 // Delete 删除用户
 func (s *UserService) Delete(ctx context.Context, id int64) error {
-	return s.repo.Delete(ctx, id)
+	return s.st.UserRepo.Delete(ctx, id)
 }
