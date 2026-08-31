@@ -22,6 +22,7 @@ type Store struct {
 	UserRepo     UserRepo
 	PlayerRepo   PlayerRepo
 	ActivityRepo ActivityRepo
+	SeasonRepo   SeasonRepo
 }
 
 func New(cfg *config.Config) (*Store, error) {
@@ -33,6 +34,7 @@ func New(cfg *config.Config) (*Store, error) {
 		UserRepo:     NewUserRepository(db),
 		PlayerRepo:   NewPlayerRepository(db),
 		ActivityRepo: NewActivityRepository(db),
+		SeasonRepo:   NewSeasonRepository(db),
 		cfg:          cfg,
 	}, nil
 }

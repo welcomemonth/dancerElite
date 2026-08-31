@@ -18,6 +18,8 @@ type Activity struct {
 	Price           float64    `gorm:"type:decimal(10,2);default:0" json:"price"`
 	Status          int        `gorm:"default:0" json:"status"` // 0:草稿 1:报名中 2:报名截止 3:进行中 4:已结束
 	CreatedBy       int64      `json:"created_by"`
+	SeasonID        int64      `gorm:"not null;index" json:"season_id"`
+	Season          *Season    `gorm:"foreignKey:SeasonID" json:"season,omitempty"`
 }
 
 func (Activity) TableName() string {
