@@ -18,9 +18,10 @@ import (
 var validate = validator.New()
 
 type Store struct {
-	cfg        *config.Config
-	UserRepo   UserRepo
-	PlayerRepo PlayerRepo
+	cfg          *config.Config
+	UserRepo     UserRepo
+	PlayerRepo   PlayerRepo
+	ActivityRepo ActivityRepo
 }
 
 func New(cfg *config.Config) (*Store, error) {
@@ -29,9 +30,10 @@ func New(cfg *config.Config) (*Store, error) {
 		return nil, err
 	}
 	return &Store{
-		UserRepo:   NewUserRepository(db),
-		PlayerRepo: NewPlayerRepository(db),
-		cfg:        cfg,
+		UserRepo:     NewUserRepository(db),
+		PlayerRepo:   NewPlayerRepository(db),
+		ActivityRepo: NewActivityRepository(db),
+		cfg:          cfg,
 	}, nil
 }
 
