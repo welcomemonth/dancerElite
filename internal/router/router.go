@@ -102,6 +102,7 @@ func registerAdminRoutes(api *gin.RouterGroup, svc *service.APIV1Service) {
 	uploadHandler := handler.NewUploadHandler()
 	activityHandler := handler.NewActivityHandler(svc.Activity)
 	registrationHandler := handler.NewRegistrationHandler(svc.Registration)
+	seasonHandler := handler.NewSeasonHandler(svc.Season)
 	paymentHandler := handler.NewPaymentHandler(svc.Payment, svc.Registration, svc.Activity)
 	systemConfigHandler := handler.NewSystemConfigHandler(svc.SystemConfig)
 	codegenHandler := handler.NewCodegenHandler(svc.Codegen)
@@ -192,6 +193,15 @@ func registerAdminRoutes(api *gin.RouterGroup, svc *service.APIV1Service) {
 		activities.PUT("/:id", activityHandler.Update)
 		activities.DELETE("/:id", activityHandler.Delete)
 		activities.PUT("/:id/status", activityHandler.UpdateStatus)
+
+		// 赛季管理
+		seasons := adminAuth.Group("/seasons")
+		seasons.GET("/", seasonHandler.List)
+		seasons.POST("/", seasonHandler.Create)
+		seasons.GET("/:id", seasonHandler.Get)
+		seasons.PUT("/:id", seasonHandler.Update)
+		seasons.DELETE("/:id", seasonHandler.Delete)
+		seasons.PUT("/:id/status", seasonHandler.UpdateStatus)
 
 		// 报名管理
 		registrations := adminAuth.Group("/registrations")

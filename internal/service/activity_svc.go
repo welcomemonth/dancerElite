@@ -36,7 +36,15 @@ func (s *ActivityService) Get(ctx context.Context, id int64) (*ActivityListItem,
 }
 
 // Create 创建活动
+// 若未显式指定 SeasonID，则默认绑定当前生效（active）赛季。
 func (s *ActivityService) Create(ctx context.Context, activity *model.Activity) error {
+	if activity.SeasonID == 0 {
+		season, err := s.st.SeasonRepo.GetActive(ctx)
+		if err != nil {
+			return errcode.ErrNoActiveSeason
+		}
+		activity.SeasonID = season.ID
+	}
 	return s.st.ActivityRepo.Create(ctx, activity)
 }
 

@@ -34,6 +34,7 @@ type activityRequest struct {
 	MaxParticipants int        `json:"max_participants"`
 	Price           float64    `json:"price"`
 	Status          int        `json:"status"`
+	SeasonID        int64      `json:"season_id"`
 }
 
 // List 获取活动列表（后台）
@@ -91,6 +92,7 @@ func (h *ActivityHandler) Create(c *gin.Context) {
 		MaxParticipants: req.MaxParticipants,
 		Price:           req.Price,
 		Status:          req.Status,
+		SeasonID:        req.SeasonID,
 		CreatedBy:       int64(userID.(float64)),
 	}
 

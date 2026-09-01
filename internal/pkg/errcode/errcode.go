@@ -35,4 +35,5 @@ var (
 	ErrPaymentNotFound        = errors.New("支付记录不存在")
 	ErrPaymentAlreadyPaid     = errors.New("订单已支付")
 	ErrRefundFailed           = errors.New("退款失败")
+	ErrNoActiveSeason         = errors.New("没有生效的赛季，请先创建并激活赛季")
 )

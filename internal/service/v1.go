@@ -20,6 +20,7 @@ type APIV1Service struct {
 	User         *UserService
 	Activity     *ActivityService
 	Registration *RegistrationService
+	Season       *SeasonService
 	SystemConfig *SystemConfigService
 	Payment      *PaymentService
 	Codegen      *CodegenService
@@ -45,6 +46,7 @@ func NewAPIV1Service(cfg *config.Config, st *store.Store) *APIV1Service {
 	svc.User = NewUserService(st, cfg.Wechat.AppID, cfg.Wechat.Secret, cfg.JWT.Secret)
 	svc.Activity = NewActivityService(st)
 	svc.Registration = NewRegistrationService(st)
+	svc.Season = NewSeasonService(st)
 	svc.Payment = NewPaymentService(st, svc.SystemConfig)
 	svc.Codegen = NewCodegenService(st)
 	svc.OperationLog = NewOperationLogService(st)
