@@ -4,7 +4,7 @@ type ActivityResult struct {
 	BaseModel
 	ActivityID     int64  `gorm:"index;not null" json:"activity_id"`
 	SeasonID       int64  `gorm:"index;not null" json:"season_id"`
-	PlayerID       int64  `gorm:"index;not null" json:"player_id"`
+	PlayerID       int64  `gorm:"index" json:"player_id"`
 	RegistrationID *int64 `gorm:"index" json:"registration_id"` // 可选关联
 	DanceType      string `gorm:"size:16;not null;index" json:"dance_type"`
 	AgeGroup       string `gorm:"size:8;not null;index" json:"age_group"`

@@ -11,21 +11,22 @@ type APIV1Service struct {
 	Store *store.Store
 	Cfg   *config.Config
 
-	Auth         *AuthService
-	BackendUser  *BackendUserService
-	Article      *ArticleService
-	Column       *ColumnService
-	Role         *RoleService
-	Menu         *MenuService
-	User         *UserService
-	Activity     *ActivityService
-	Registration *RegistrationService
-	Season       *SeasonService
-	SystemConfig *SystemConfigService
-	Payment      *PaymentService
-	Codegen      *CodegenService
-	OperationLog *OperationLogService
-	Ranking      *RankingService
+	Auth           *AuthService
+	BackendUser    *BackendUserService
+	Article        *ArticleService
+	Column         *ColumnService
+	Role           *RoleService
+	Menu           *MenuService
+	User           *UserService
+	Activity       *ActivityService
+	Registration   *RegistrationService
+	Season         *SeasonService
+	ActivityResult *ActivityResultService
+	SystemConfig   *SystemConfigService
+	Payment        *PaymentService
+	Codegen        *CodegenService
+	OperationLog   *OperationLogService
+	Ranking        *RankingService
 }
 
 // NewAPIV1Service 装配所有 service
@@ -47,6 +48,7 @@ func NewAPIV1Service(cfg *config.Config, st *store.Store) *APIV1Service {
 	svc.Activity = NewActivityService(st)
 	svc.Registration = NewRegistrationService(st)
 	svc.Season = NewSeasonService(st)
+	svc.ActivityResult = NewActivityResultService(st)
 	svc.Payment = NewPaymentService(st, svc.SystemConfig)
 	svc.Codegen = NewCodegenService(st)
 	svc.OperationLog = NewOperationLogService(st)
