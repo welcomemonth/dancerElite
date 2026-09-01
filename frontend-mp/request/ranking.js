@@ -1,12 +1,5 @@
-// 排行榜模块：赛季 / 排行 / 选手（公开只读）
+// 排行榜模块：排行 / 选手（公开只读）
 const { get } = require('./http');
-
-/**
- * 当前激活赛季
- */
-function activeSeason() {
-  return get('/seasons/active');
-}
 
 /**
  * 年度积分排行榜（按年龄组、舞种筛选）
@@ -33,4 +26,4 @@ function playerDetail(id) {
   return get(`/players/${id}`);
 }
 
-module.exports = { activeSeason, leaderboard, orgLeaderboard, playerDetail };
+module.exports = { leaderboard, orgLeaderboard, playerDetail };

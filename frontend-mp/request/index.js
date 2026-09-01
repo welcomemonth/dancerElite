@@ -5,11 +5,13 @@ const activity = require('./activity');
 const ranking = require('./ranking');
 const registration = require('./registration');
 const payment = require('./payment');
+const season = require('./season');
 
 module.exports = {
   auth,
   activity,
   ranking,
   registration,
-  payment
+  payment,
+  season
 };
