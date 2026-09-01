@@ -24,7 +24,7 @@ Page({
   },
 
   onGoHome() {
-    wx.switchTab({ url: '/pages/home/home' });
+    wx.switchTab({ url: '/pages/events/list' });
   },
 
   onFocus(e) {
@@ -65,8 +65,8 @@ Page({
         app.globalData.user = { ...app.globalData.user, ...user };
         wx.showToast({ title: '注册成功', icon: 'success' });
         setTimeout(() => {
-          // home 是 tabBar 页面，使用 switchTab
-          wx.switchTab({ url: '/pages/home/home' });
+          // 赛事列表是 tabBar 首页，使用 switchTab
+          wx.switchTab({ url: '/pages/events/list' });
         }, 600);
       })
       .catch((err) => {

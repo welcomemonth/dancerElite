@@ -25,7 +25,6 @@ App({
     });
   },
   globalData: {
-    user: null,
-    pendingColumn: null
+    user: null
   }
 });
