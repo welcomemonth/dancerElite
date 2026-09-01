@@ -75,6 +75,16 @@ export const activityApi = {
   updateStatus: (id, data) => request.put(`/api/admin/activities/${id}/status`, data)
 }
 
+// ==================== 赛季管理 ====================
+export const seasonApi = {
+  list: () => request.get('/api/admin/seasons/'),
+  get: id => request.get(`/api/admin/seasons/${id}`),
+  create: data => request.post('/api/admin/seasons/', data),
+  update: (id, data) => request.put(`/api/admin/seasons/${id}`, data),
+  delete: id => request.delete(`/api/admin/seasons/${id}`),
+  updateStatus: (id, data) => request.put(`/api/admin/seasons/${id}/status`, data)
+}
+
 // ==================== 报名管理 ====================
 export const registrationApi = {
   list: params => request.get('/api/admin/registrations/', { params }),
