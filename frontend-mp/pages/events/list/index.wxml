@@ -1,12 +1,12 @@
 <view class="events">
   <!-- 顶部品牌头 -->
-  <view class="head">
+  <!-- <view class="head">
     <view class="head__left">
       <view class="head__title">优舞盟</view>
       <view class="head__sub">舞蹈赛事平台 · 2024赛季</view>
     </view>
     <view class="head__bell">🔔<view class="head__dot"></view></view>
-  </view>
+  </view> -->
 
   <!-- 搜索 -->
   <view class="search">
