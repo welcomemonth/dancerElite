@@ -24,6 +24,7 @@ type APIV1Service struct {
 	Payment      *PaymentService
 	Codegen      *CodegenService
 	OperationLog *OperationLogService
+	Ranking      *RankingService
 }
 
 // NewAPIV1Service 装配所有 service
@@ -41,12 +42,13 @@ func NewAPIV1Service(cfg *config.Config, st *store.Store) *APIV1Service {
 	svc.Column = NewColumnService(st)
 	svc.Role = NewRoleService(st)
 	svc.Menu = NewMenuService(st)
-	svc.User = NewUserService(st, cfg.Wechat.AppID, cfg.Wechat.Secret)
+	svc.User = NewUserService(st, cfg.Wechat.AppID, cfg.Wechat.Secret, cfg.JWT.Secret)
 	svc.Activity = NewActivityService(st)
 	svc.Registration = NewRegistrationService(st)
 	svc.Payment = NewPaymentService(st, svc.SystemConfig)
 	svc.Codegen = NewCodegenService(st)
 	svc.OperationLog = NewOperationLogService(st)
+	svc.Ranking = NewRankingService(st)
 
 	return svc
 }

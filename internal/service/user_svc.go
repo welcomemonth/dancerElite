@@ -3,12 +3,14 @@ package service
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/ArtisanCloud/PowerWeChat/v3/src/miniProgram"
 	"gorm.io/gorm"
 
 	"github.com/welcomemonth/dancer-elite/internal/model"
 	"github.com/welcomemonth/dancer-elite/internal/pkg/errcode"
+	"github.com/welcomemonth/dancer-elite/internal/pkg/token"
 	"github.com/welcomemonth/dancer-elite/internal/store"
 )
 
@@ -17,15 +19,27 @@ type UserService struct {
 	st        *store.Store
 	appID     string
 	appSecret string
+	jwtSecret string
 }
 
 // NewUserService 创建小程序用户服务
-func NewUserService(st *store.Store, appID, appSecret string) *UserService {
+func NewUserService(st *store.Store, appID, appSecret, jwtSecret string) *UserService {
 	return &UserService{
 		st:        st,
 		appID:     appID,
 		appSecret: appSecret,
+		jwtSecret: jwtSecret,
 	}
+}
+
+// GenerateToken 为小程序用户签发 JWT（供报名/支付等受保护接口使用）
+func (s *UserService) GenerateToken(userID int64, openID string) (string, error) {
+	claims := map[string]any{
+		"user_id": userID,
+		"openid":  openID,
+		"exp":     time.Now().Add(7 * 24 * time.Hour).Unix(),
+	}
+	return token.Sign(s.jwtSecret, claims)
 }
 
 // WechatLogin 微信小程序登录

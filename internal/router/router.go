@@ -46,6 +46,7 @@ func registerMiniProgramRoutes(api *gin.RouterGroup, svc *service.APIV1Service) 
 	activityHandler := handler.NewActivityHandler(svc.Activity)
 	registrationHandler := handler.NewRegistrationHandler(svc.Registration)
 	paymentHandler := handler.NewPaymentHandler(svc.Payment, svc.Registration, svc.Activity)
+	rankingHandler := handler.NewRankingHandler(svc.Ranking)
 
 	mp := api.Group("/mp")
 	{
@@ -63,6 +64,12 @@ func registerMiniProgramRoutes(api *gin.RouterGroup, svc *service.APIV1Service) 
 		mpActivities := mp.Group("/activities")
 		mpActivities.GET("/", activityHandler.ListForMP)
 		mpActivities.GET("/:id", activityHandler.GetForMP)
+
+		// 排行榜 / 选手（公开只读）
+		mp.GET("/seasons/active", rankingHandler.ActiveSeason)
+		mp.GET("/rankings", rankingHandler.Leaderboard)
+		mp.GET("/rankings/organization", rankingHandler.OrgLeaderboard)
+		mp.GET("/players/:id", rankingHandler.PlayerDetail)
 
 		// 需要小程序用户认证的接口
 		mpAuth := mp.Group("")

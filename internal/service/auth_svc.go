@@ -6,11 +6,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
-
 	"github.com/welcomemonth/dancer-elite/internal/model"
 	"github.com/welcomemonth/dancer-elite/internal/pkg/crypto"
 	"github.com/welcomemonth/dancer-elite/internal/pkg/errcode"
+	"github.com/welcomemonth/dancer-elite/internal/pkg/token"
 	"github.com/welcomemonth/dancer-elite/internal/store"
 )
 
@@ -118,14 +117,14 @@ func (s *AuthService) ChangePassword(ctx context.Context, userID int64, oldPassw
 	})
 }
 
-// generateToken 生成 JWT 令牌
+// generateToken 生成后台用户 JWT 令牌
 func (s *AuthService) generateToken(user *model.BackendUser) (string, error) {
 	roleName := ""
 	if user.Role != nil {
 		roleName = user.Role.Name
 	}
 
-	claims := jwt.MapClaims{
+	claims := map[string]any{
 		"user_id":  user.ID,
 		"username": user.Username,
 		"role_id":  user.RoleID,
@@ -133,8 +132,7 @@ func (s *AuthService) generateToken(user *model.BackendUser) (string, error) {
 		"exp":      time.Now().Add(24 * time.Hour).Unix(),
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(s.jwtSecret))
+	return token.Sign(s.jwtSecret, claims)
 }
 
 // GenerateRandomPassword 生成随机密码

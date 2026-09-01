@@ -35,7 +35,13 @@ func (h *UserHandler) WechatLogin(c *gin.Context) {
 		return
 	}
 
-	response.OK(c, user)
+	token, err := h.svc.GenerateToken(user.ID, user.OpenID)
+	if err != nil {
+		response.ServerError(c, err.Error())
+		return
+	}
+
+	response.OK(c, gin.H{"token": token, "user": user})
 }
 
 // Register 注册/绑定手机号
@@ -56,7 +62,13 @@ func (h *UserHandler) Register(c *gin.Context) {
 		return
 	}
 
-	response.Created(c, user)
+	token, err := h.svc.GenerateToken(user.ID, user.OpenID)
+	if err != nil {
+		response.ServerError(c, err.Error())
+		return
+	}
+
+	response.Created(c, gin.H{"token": token, "user": user})
 }
 
 // List 获取小程序用户列表（后台）

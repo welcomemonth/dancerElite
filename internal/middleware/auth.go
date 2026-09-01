@@ -54,6 +54,9 @@ func JWTAuth(secret string) gin.HandlerFunc {
 			if roleID, exists := claims["role_id"]; exists {
 				c.Set("role_id", roleID)
 			}
+			if openid, exists := claims["openid"]; exists {
+				c.Set("openid", openid)
+			}
 		}
 
 		c.Next()
