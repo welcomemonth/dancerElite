@@ -52,6 +52,12 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column label="级别 / 舞种" min-width="200">
+          <template #default="scope">
+            <el-tag v-for="g in (scope.row.age_groups || [])" :key="'g-' + g" size="small" class="tag-item">{{ g }}</el-tag>
+            <el-tag v-for="d in (scope.row.dance_types || [])" :key="'d-' + d" size="small" type="success" class="tag-item">{{ d }}</el-tag>
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="260" fixed="right">
           <template #default="scope">
             <el-button text type="primary" :icon="Edit" @click="editActivity(scope.row.id)" v-permission="'activity:update'">编辑</el-button>
@@ -172,5 +178,8 @@ onMounted(() => loadActivities())
 .activity-list {
   display: flex;
   flex-direction: column;
+}
+.tag-item {
+  margin-right: 4px;
 }
 </style>

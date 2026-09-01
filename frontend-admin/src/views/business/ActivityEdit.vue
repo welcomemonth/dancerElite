@@ -44,6 +44,19 @@
           <el-input v-model="form.location" placeholder="请输入活动地点" />
         </el-form-item>
 
+        <el-form-item label="级别组合" prop="age_groups">
+          <el-select v-model="form.age_groups" multiple collapse-tags placeholder="可多选，U11/U13/U15（可扩展）" style="width: 100%">
+            <el-option v-for="g in AGE_GROUP_OPTIONS" :key="g" :label="g" :value="g" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="舞种类型" prop="dance_types">
+          <el-select v-model="form.dance_types" multiple collapse-tags placeholder="可多选，古典舞/民族民间舞（可扩展）" style="width: 100%">
+            <el-option v-for="d in DANCE_TYPE_OPTIONS" :key="d" :label="d" :value="d" />
+          </el-select>
+          <span class="form-tip">{{ sessionCount }} 场赛事（级别数 × 舞种数）</span>
+        </el-form-item>
+
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="活动开始时间" prop="start_time">
@@ -125,6 +138,10 @@ const router = useRouter()
 const route = useRoute()
 const formRef = ref()
 
+// 级别/舞种选项，后续可在此扩展
+const AGE_GROUP_OPTIONS = ['U11', 'U13', 'U15']
+const DANCE_TYPE_OPTIONS = ['古典舞', '民族民间舞']
+
 const isEdit = computed(() => !!route.params.id)
 
 const form = ref({
@@ -139,7 +156,16 @@ const form = ref({
   reg_end_time: null,
   max_participants: 0,
   price: 0,
-  status: 0
+  status: 0,
+  age_groups: [],
+  dance_types: []
+})
+
+// 场次数量 = 级别数 × 舞种数（笛卡尔积）
+const sessionCount = computed(() => {
+  const groups = form.value.age_groups || []
+  const types = form.value.dance_types || []
+  return groups.length * types.length
 })
 
 const rules = {
@@ -174,6 +200,8 @@ const loadActivity = async () => {
       max_participants: data.max_participants,
       price: data.price,
       status: data.status,
+      age_groups: data.age_groups || [],
+      dance_types: data.dance_types || [],
     }
   } catch (error) {
     ElMessage.error('加载活动失败')

@@ -35,6 +35,8 @@ type activityRequest struct {
 	Price           float64    `json:"price"`
 	Status          int        `json:"status"`
 	SeasonID        int64      `json:"season_id"`
+	AgeGroups       []string   `json:"age_groups"`
+	DanceTypes      []string   `json:"dance_types"`
 }
 
 // List 获取活动列表（后台）
@@ -93,6 +95,8 @@ func (h *ActivityHandler) Create(c *gin.Context) {
 		Price:           req.Price,
 		Status:          req.Status,
 		SeasonID:        req.SeasonID,
+		AgeGroups:       model.StringSlice(req.AgeGroups),
+		DanceTypes:      model.StringSlice(req.DanceTypes),
 		CreatedBy:       int64(userID.(float64)),
 	}
 
@@ -131,6 +135,8 @@ func (h *ActivityHandler) Update(c *gin.Context) {
 		"max_participants": req.MaxParticipants,
 		"price":            req.Price,
 		"status":           req.Status,
+		"age_groups":       model.StringSlice(req.AgeGroups),
+		"dance_types":      model.StringSlice(req.DanceTypes),
 	}
 
 	if err := h.svc.Update(c.Request.Context(), id, updates); err != nil {
