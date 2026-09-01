@@ -59,11 +59,17 @@ func (s *ActivityService) UpdateStatus(ctx context.Context, id int64, status int
 }
 
 // Delete 删除活动
+// 只允许删除没有任何关联关系的活动：无报名记录、无成绩记录。
 func (s *ActivityService) Delete(ctx context.Context, id int64) error {
-	// 检查是否有有效报名
-	exists, _ := s.st.RegistrationRepo.Exists(ctx, "activity_id = ? AND status IN (0,1) AND deleted_at IS NULL", id)
+	// 检查是否存在报名记录
+	exists, _ := s.st.RegistrationRepo.Exists(ctx, "activity_id = ? AND deleted_at IS NULL", id)
 	if exists {
 		return errcode.ErrActivityHasRegistrations
+	}
+	// 检查是否存在成绩记录
+	hasResults, _ := s.st.ActivityResultRepo.Exists(ctx, "activity_id = ? AND deleted_at IS NULL", id)
+	if hasResults {
+		return errcode.ErrActivityHasResults
 	}
 	return s.st.ActivityRepo.Delete(ctx, id)
 }

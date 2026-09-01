@@ -65,7 +65,7 @@
             >
               {{ scope.row.status === 1 ? '停止报名' : '开放报名' }}
             </el-button>
-            <el-button text type="danger" :icon="Delete" @click="deleteActivity(scope.row)" v-if="scope.row.status === 0" v-permission="'activity:delete'">删除</el-button>
+            <el-button text type="danger" :icon="Delete" @click="deleteActivity(scope.row)" v-permission="'activity:delete'">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -146,12 +146,17 @@ const toggleStatus = async (row) => {
 
 const deleteActivity = async (row) => {
   try {
-    await ElMessageBox.confirm('确定要删除该活动吗？', '提示', { type: 'warning' })
+    await ElMessageBox.confirm('确定要删除该活动吗？删除后不可恢复。', '提示', { type: 'warning' })
+  } catch (e) {
+    return // 用户取消
+  }
+
+  try {
     await activityApi.delete(row.id)
     ElMessage.success('删除成功')
     loadActivities()
   } catch (error) {
-    if (error !== 'cancel') ElMessage.error('删除失败')
+    // 后端具体错误（如“活动存在报名记录，无法删除”）已由请求拦截器统一弹出
   }
 }
 
