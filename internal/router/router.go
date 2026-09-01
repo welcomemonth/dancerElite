@@ -106,7 +106,6 @@ func registerAdminRoutes(api *gin.RouterGroup, svc *service.APIV1Service) {
 	systemConfigHandler := handler.NewSystemConfigHandler(svc.SystemConfig)
 	codegenHandler := handler.NewCodegenHandler(svc.Codegen)
 	operationLogHandler := handler.NewOperationLogHandler(svc.OperationLog)
-	seasonHandler := handler.NewSeasonHandler(svc.Season)
 
 	admin := api.Group("/admin")
 
@@ -193,15 +192,6 @@ func registerAdminRoutes(api *gin.RouterGroup, svc *service.APIV1Service) {
 		activities.PUT("/:id", activityHandler.Update)
 		activities.DELETE("/:id", activityHandler.Delete)
 		activities.PUT("/:id/status", activityHandler.UpdateStatus)
-
-		// 赛季管理
-		seasons := adminAuth.Group("/seasons")
-		seasons.GET("/", seasonHandler.List)
-		seasons.POST("/", seasonHandler.Create)
-		seasons.GET("/:id", seasonHandler.Get)
-		seasons.PUT("/:id", seasonHandler.Update)
-		seasons.DELETE("/:id", seasonHandler.Delete)
-		seasons.PUT("/:id/status", seasonHandler.UpdateStatus)
 
 		// 报名管理
 		registrations := adminAuth.Group("/registrations")
