@@ -25,6 +25,7 @@ type APIV1Service struct {
 	Codegen      *CodegenService
 	OperationLog *OperationLogService
 	Ranking      *RankingService
+	Season       *SeasonService
 }
 
 // NewAPIV1Service 装配所有 service
@@ -49,6 +50,7 @@ func NewAPIV1Service(cfg *config.Config, st *store.Store) *APIV1Service {
 	svc.Codegen = NewCodegenService(st)
 	svc.OperationLog = NewOperationLogService(st)
 	svc.Ranking = NewRankingService(st)
+	svc.Season = NewSeasonService(st)
 
 	return svc
 }
