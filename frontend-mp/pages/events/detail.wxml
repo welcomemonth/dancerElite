@@ -1,0 +1,214 @@
+<view class="detail" wx:if="{{event}}">
+  <!-- Banner -->
+  <view class="banner" style="background: {{event.coverGradient}};">
+    <view class="banner__deco banner__deco--1"></view>
+    <view class="banner__deco banner__deco--2"></view>
+    <view class="banner__deco banner__deco--3"></view>
+    <view class="banner__inner">
+      <view class="banner__name">{{event.name}}</view>
+      <view class="banner__org">{{event.organizer}}</view>
+    </view>
+    <view class="banner__badge" style="background:{{event.statusMeta.bg}};color:{{event.statusMeta.color}};">
+      <view class="banner__badge-dot" style="background:{{event.statusMeta.dot}};"></view>
+      {{event.statusMeta.label}}
+    </view>
+  </view>
+
+  <!-- 信息 -->
+  <view class="info">
+    <view class="info__row" wx:for="{{event.infoRows}}" wx:key="text">
+      <text class="info__icon">{{item.icon}}</text>
+      <text class="info__text">{{item.text}}</text>
+    </view>
+    <view class="info__chips">
+      <text class="chip chip--style" wx:for="{{event.styles}}" wx:for-item="s" wx:key="*this">{{s}}</text>
+      <text class="chip chip--age" wx:for="{{event.ageGroups}}" wx:for-item="a" wx:key="*this">{{a}}</text>
+    </view>
+  </view>
+
+  <!-- ===== 预宣传 ===== -->
+  <view class="content" wx:if="{{event.status === 'pre'}}">
+    <!-- 倒计时 -->
+    <view class="countdown">
+      <view class="countdown__label">距开放报名还有</view>
+      <view class="countdown__num">{{event.countdown}}</view>
+      <view class="countdown__unit">天</view>
+      <view class="countdown__deadline">{{event.deadline}}</view>
+    </view>
+
+    <!-- 赛事介绍 -->
+    <view class="section">
+      <view class="section__title">赛事介绍</view>
+      <view class="section__text">{{event.description}}</view>
+    </view>
+
+    <!-- 赛事亮点 -->
+    <view class="highlights">
+      <view class="highlights__title">赛事亮点</view>
+      <view class="highlights__row" wx:for="{{event.highlights}}" wx:key="t">
+        <text class="highlights__icon">{{item.e}}</text>
+        <text class="highlights__text">{{item.t}}</text>
+      </view>
+    </view>
+
+    <!-- 提醒 -->
+    <view class="remind {{reminded ? 'remind--done' : ''}}" bindtap="onRemind">
+      <text>{{reminded ? '✓ 已设置提醒' : '🔔 报名开启时提醒我'}}</text>
+    </view>
+  </view>
+
+  <!-- ===== 报名中 ===== -->
+  <view class="content" wx:if="{{event.status === 'open'}}">
+    <!-- 报名成功 -->
+    <block wx:if="{{submitted}}">
+      <view class="success">
+        <view class="success__emoji">🎉</view>
+        <view class="success__title">报名成功！</view>
+        <view class="success__desc">赛前将推送参赛须知至您的账号</view>
+        <view class="success__card">
+          <view class="success__label">报名信息</view>
+          <view class="success__name">{{formName}}</view>
+          <view class="success__meta">{{formAge}} · {{formStyle}} · {{event.name}}</view>
+        </view>
+      </view>
+    </block>
+
+    <!-- 报名表单 -->
+    <block wx:else>
+      <!-- 进度 -->
+      <view class="progress">
+        <view class="progress__head">
+          <text class="progress__label">报名人数</text>
+          <text class="progress__value">{{event.registered}} / {{event.maxParticipants || '不限'}}</text>
+        </view>
+        <view class="progress__track">
+          <view class="progress__bar" style="width:{{event.progress}}%;"></view>
+        </view>
+        <view class="progress__deadline">截止：{{event.deadline}}</view>
+      </view>
+
+      <!-- 赛事介绍 -->
+      <view class="section">
+        <view class="section__title">赛事介绍</view>
+        <view class="section__text">{{event.description}}</view>
+      </view>
+
+      <!-- 报名表单 -->
+      <view class="form">
+        <view class="form__title">报名信息</view>
+
+        <view class="field">
+          <view class="field__label">选手姓名</view>
+          <input
+            class="field__input"
+            placeholder="请输入真实姓名"
+            placeholder-class="field__ph"
+            value="{{formName}}"
+            bindinput="onNameInput"
+          />
+        </view>
+
+        <view class="field">
+          <view class="field__label">年龄组别</view>
+          <view class="field__opts">
+            <view
+              wx:for="{{event.ageGroups}}"
+              wx:key="*this"
+              class="opt {{formAge === item ? 'opt--active' : ''}}"
+              data-a="{{item}}"
+              bindtap="onAgeSelect"
+            >{{item}}</view>
+          </view>
+        </view>
+
+        <view class="field">
+          <view class="field__label">参赛舞种</view>
+          <view class="field__opts field__opts--wrap">
+            <view
+              wx:for="{{event.styles}}"
+              wx:key="*this"
+              class="opt {{formStyle === item ? 'opt--active' : ''}}"
+              data-s="{{item}}"
+              bindtap="onStyleSelect"
+            >{{item}}</view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 立即报名 -->
+      <view
+        class="submit {{formName.trim() ? '' : 'submit--disabled'}}"
+        bindtap="onSubmit"
+      >立即报名</view>
+    </block>
+  </view>
+
+  <!-- ===== 已结束 ===== -->
+  <view class="content" wx:if="{{event.status === 'closed'}}">
+    <!-- 赛事回顾 -->
+    <view class="section">
+      <view class="section__title">赛事回顾</view>
+      <view class="section__text">{{event.description}}</view>
+    </view>
+
+    <!-- 数据统计 -->
+    <view class="stats">
+      <view class="stats__item">
+        <view class="stats__value">{{event.registered}}</view>
+        <view class="stats__label">参赛人数</view>
+      </view>
+      <view class="stats__item">
+        <view class="stats__value">{{event.schoolCount}}</view>
+        <view class="stats__label">参赛院校</view>
+      </view>
+      <view class="stats__item">
+        <view class="stats__value">12</view>
+        <view class="stats__label">参赛城市</view>
+      </view>
+    </view>
+
+    <!-- 获奖名单 -->
+    <view class="section__title">获奖名单</view>
+
+    <view class="rank-filter">
+      <view
+        wx:for="{{rankStyles}}"
+        wx:key="*this"
+        class="rank-filter__style {{rankStyle === item ? 'rank-filter__style--active' : ''}}"
+        data-s="{{item}}"
+        bindtap="onRankStyle"
+      >{{item}}</view>
+    </view>
+    <view class="rank-filter rank-filter--age">
+      <view
+        wx:for="{{rankAges}}"
+        wx:key="*this"
+        class="rank-filter__age {{rankAge === item ? 'rank-filter__age--active' : ''}}"
+        data-a="{{item}}"
+        bindtap="onRankAge"
+      >{{item}}</view>
+    </view>
+
+    <!-- 名单 -->
+    <view wx:if="{{rankings.length === 0}}" class="rank-empty">暂无该组别获奖名单</view>
+    <view class="rank-list" wx:else>
+      <view class="rank-row" wx:for="{{rankings}}" wx:key="rank">
+        <view
+          class="rank-row__num"
+          style="background:{{item.awardMeta.bg}};color:{{item.awardMeta.color}};border:1rpx solid {{item.awardMeta.border}};"
+        >{{item.rank}}</view>
+        <view class="rank-row__main">
+          <view class="rank-row__name">{{item.name}}</view>
+          <view class="rank-row__school">{{item.school}}</view>
+        </view>
+        <view class="rank-row__right">
+          <view
+            class="rank-row__award"
+            style="background:{{item.awardMeta.bg}};color:{{item.awardMeta.color}};border:1rpx solid {{item.awardMeta.border}};"
+          >{{item.award}}奖</view>
+          <view class="rank-row__score">{{item.score}}</view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

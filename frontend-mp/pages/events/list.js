@@ -47,7 +47,6 @@ Page({
 
   onEventTap(e) {
     const id = e.currentTarget.dataset.id;
-    // 详情页后续补充
-    wx.showToast({ title: '赛事详情开发中', icon: 'none' });
+    wx.navigateTo({ url: '/pages/events/detail?id=' + id });
   }
 });

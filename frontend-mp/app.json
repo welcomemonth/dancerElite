@@ -2,6 +2,7 @@
   "pages": [
     "pages/rankings/index",
     "pages/events/list",
+    "pages/events/detail",
     "pages/articles/list",
     "pages/articles/detail",
     "pages/register/register",
