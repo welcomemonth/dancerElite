@@ -1,9 +1,9 @@
-const api = require('./utils/api.js');
+const api = require('./request/index.js');
 App({
   onLaunch() {
     wx.login({
       success: (res) => {
-        api.login(res.code)
+        api.auth.login(res.code)
           .then((user) => {
             this.globalData.user = user;
             // 如果还没绑定手机号，跳转到注册页（register 已降级为非 tab 页，用 navigateTo）

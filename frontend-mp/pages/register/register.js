@@ -1,4 +1,4 @@
-const api = require('../../utils/api.js');
+const api = require('../../request/index.js');
 const app = getApp();
 
 Page({
@@ -60,7 +60,7 @@ Page({
     }
 
     this.setData({ submitting: true });
-    api.register(phone, openid, name)
+    api.auth.register({ phone, openid, name })
       .then((user) => {
         app.globalData.user = { ...app.globalData.user, ...user };
         wx.showToast({ title: '注册成功', icon: 'success' });
