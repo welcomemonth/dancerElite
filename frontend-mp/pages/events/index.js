@@ -1,5 +1,5 @@
-const api = require('../../../request/index.js');
-const { COMPETITIONS, STATUS } = require('../../../utils/mock.js');
+const api = require('../../request/index.js');
+const { COMPETITIONS, STATUS } = require('../../utils/mock.js');
 
 Page({
   data: {
@@ -58,6 +58,6 @@ Page({
 
   onEventTap(e) {
     const id = e.currentTarget.dataset.id;
-    wx.navigateTo({ url: '/pages/events/detail?id=' + id });
+    wx.navigateTo({ url: '/pages/events/detail/index?id=' + id });
   }
 });

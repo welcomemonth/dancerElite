@@ -1,4 +1,4 @@
-const { COMPETITIONS, STATUS } = require('../../utils/mock.js');
+const { COMPETITIONS, STATUS } = require('../../../utils/mock.js');
 
 // 奖项配色（金/银/铜）
 const AWARD_CFG = {

@@ -1,8 +1,8 @@
 {
   "pages": [
     "pages/rankings/index",
-    "pages/events/list/index",
-    "pages/events/detail",
+    "pages/events/index",
+    "pages/events/detail/index",
     "pages/register/register",
     "pages/profile/profile"
   ],
@@ -21,7 +21,7 @@
     "borderStyle": "white",
     "list": [
       {
-        "pagePath": "pages/events/list/index",
+        "pagePath": "pages/events/index",
         "text": "赛事",
         "iconPath": "static/tabbar/register.png",
         "selectedIconPath": "static/tabbar/register-active.png"
