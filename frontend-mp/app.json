@@ -1,9 +1,10 @@
 {
   "pages": [
-    "pages/home/home",
-    "pages/register/register",
+    "pages/rankings/index",
+    "pages/events/list",
     "pages/articles/list",
     "pages/articles/detail",
+    "pages/register/register",
     "pages/profile/profile"
   ],
   "window": {
@@ -21,22 +22,16 @@
     "borderStyle": "white",
     "list": [
       {
-        "pagePath": "pages/home/home",
-        "text": "首页",
-        "iconPath": "static/tabbar/home.png",
-        "selectedIconPath": "static/tabbar/home-active.png"
-      },
-      {
-        "pagePath": "pages/articles/list",
-        "text": "文章",
-        "iconPath": "static/tabbar/article.png",
-        "selectedIconPath": "static/tabbar/article-active.png"
-      },
-      {
-        "pagePath": "pages/register/register",
-        "text": "报名",
+        "pagePath": "pages/events/list",
+        "text": "赛事",
         "iconPath": "static/tabbar/register.png",
         "selectedIconPath": "static/tabbar/register-active.png"
+      },
+      {
+        "pagePath": "pages/rankings/index",
+        "text": "排行",
+        "iconPath": "static/tabbar/ranking.png",
+        "selectedIconPath": "static/tabbar/ranking-active.png"
       },
       {
         "pagePath": "pages/profile/profile",

@@ -6,21 +6,21 @@ App({
         api.login(res.code)
           .then((user) => {
             this.globalData.user = user;
-            // 如果已经绑定手机号，保留在当前页面，否则跳转到注册页
-            if (!user.phone) {
-              // 获取当前页面路径
-              const pages = getCurrentPages();
-              const currentPage = pages[pages.length - 1];
-              
-              // 如果当前不在注册页，才跳转（register 现在是 tabBar 页面，使用 switchTab）
-              if (currentPage && currentPage.route !== 'pages/register/register') {
-                wx.switchTab({ url: '/pages/register/register' });
-              }
-            }
+            // 如果还没绑定手机号，跳转到注册页（register 已降级为非 tab 页，用 navigateTo）
+            // if (user && !user.phone) {
+            //   const pages = getCurrentPages();
+            //   const currentPage = pages[pages.length - 1];
+            //   if (currentPage && currentPage.route !== 'pages/register/register') {
+            //     wx.navigateTo({ url: '/pages/register/register' });
+            //   }
+            // }
           })
           .catch((err) => {
             wx.showToast({ title: err.toString(), icon: 'none' });
           });
+      },
+      fail: () => {
+        wx.showToast({ title: '微信登录失败', icon: 'none' });
       }
     });
   },
@@ -28,4 +28,4 @@ App({
     user: null,
     pendingColumn: null
   }
-}); 
+});

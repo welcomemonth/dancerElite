@@ -1,0 +1,79 @@
+<view class="events">
+  <!-- 顶部品牌头 -->
+  <view class="head">
+    <view class="head__left">
+      <view class="head__title">优舞盟</view>
+      <view class="head__sub">舞蹈赛事平台 · 2024赛季</view>
+    </view>
+    <view class="head__bell">🔔<view class="head__dot"></view></view>
+  </view>
+
+  <!-- 搜索 -->
+  <view class="search">
+    <text class="search__icon">🔍</text>
+    <input
+      class="search__input"
+      placeholder="搜索赛事名称、城市..."
+      placeholder-style="color:#8B8FA8"
+      value="{{keyword}}"
+      bindinput="onInput"
+    />
+  </view>
+
+  <!-- 状态筛选 -->
+  <view class="filters">
+    <view
+      wx:for="{{filterTabs}}"
+      wx:key="key"
+      class="filter {{filter === item.key ? 'filter--active' : ''}}"
+      data-key="{{item.key}}"
+      bindtap="onFilter"
+    >{{item.label}}</view>
+  </view>
+
+  <!-- 列表 -->
+  <view class="list">
+    <view class="count">共 {{total}} 项赛事</view>
+
+    <view
+      class="card"
+      wx:for="{{list}}"
+      wx:for-item="c"
+      wx:key="id"
+      data-id="{{c.id}}"
+      bindtap="onEventTap"
+    >
+      <view class="card__cover" style="background: {{c.coverGradient}};">
+        <view class="card__deco card__deco--1"></view>
+        <view class="card__deco card__deco--2"></view>
+        <view class="badge" style="background:{{c.statusMeta.bg}};color:{{c.statusMeta.color}};">
+          <view class="badge__dot" style="background:{{c.statusMeta.dot}};"></view>
+          {{c.statusMeta.label}}
+        </view>
+      </view>
+
+      <view class="card__body">
+        <view class="card__name">{{c.name}}</view>
+
+        <view class="card__meta">
+          <text class="card__meta-icon">📅</text>
+          <text>{{c.date}}</text>
+        </view>
+        <view class="card__meta">
+          <text class="card__meta-icon">📍</text>
+          <text>{{c.location}}</text>
+        </view>
+
+        <view class="card__chips">
+          <text class="chip chip--style" wx:for="{{c.styles}}" wx:for-item="s" wx:key="*this">{{s}}</text>
+          <text class="chip chip--age" wx:for="{{c.ageGroups}}" wx:for-item="a" wx:key="*this">{{a}}</text>
+        </view>
+
+        <view class="card__foot">
+          <text class="card__foot-text">{{c.footerText}}</text>
+          <text class="card__foot-more">查看详情 →</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,104 @@
+<view class="rank">
+  <!-- 头部 -->
+  <view class="rank__head">
+    <view class="rank__title">年度积分榜</view>
+    <view class="rank__sub">2024赛季 · 实时更新</view>
+  </view>
+
+  <!-- 舞种分段切换 -->
+  <view class="seg">
+    <view
+      wx:for="{{styles}}"
+      wx:key="*this"
+      class="seg__item {{style === item ? 'seg__item--active' : ''}}"
+      data-s="{{item}}"
+      bindtap="onStyle"
+    >{{item}}</view>
+  </view>
+
+  <!-- 级别下划线切换 -->
+  <view class="age-tabs">
+    <view
+      wx:for="{{levels}}"
+      wx:key="*this"
+      class="age-tab {{level === item ? 'age-tab--active' : ''}}"
+      data-l="{{item}}"
+      bindtap="onLevel"
+    >{{item}}</view>
+  </view>
+
+  <!-- 搜索框 -->
+  <view class="search">
+    <text class="search__icon">🔍</text>
+    <input
+      class="search__input"
+      placeholder="搜索选手姓名…"
+      placeholder-class="search__ph"
+      value="{{keyword}}"
+      bindinput="onSearch"
+    />
+  </view>
+
+  <!-- 表头 -->
+  <view class="thead">
+    <text class="thead__rank">排名</text>
+    <text class="thead__name">选手</text>
+    <text class="thead__change">变化</text>
+    <text class="thead__score">总积分</text>
+  </view>
+
+  <!-- 榜单 -->
+  <view class="tbody">
+    <block wx:for="{{rows}}" wx:key="id">
+      <!-- 晋级区标签（首个晋级行上方） -->
+      <view wx:if="{{item.showAdvancingLabel}}" class="zone-label">
+        <text class="zone-label__text">晋级区</text>
+      </view>
+
+      <!-- 未晋级区分隔 -->
+      <view wx:if="{{item.showDivider}}" class="zone-divider">
+        <view class="zone-divider__line"></view>
+        <view class="zone-divider__tag">未晋级区</view>
+        <view class="zone-divider__gap"></view>
+      </view>
+
+      <!-- 行 -->
+      <view
+        class="row {{item.isAdvancing ? 'row--advancing' : ''}}"
+        style="border-bottom-color: {{item.isAdvancing ? '#f8bbd0' : '#f1f5f9'}};"
+      >
+        <!-- 排名 -->
+        <view class="cell cell--rank">
+          <view wx:if="{{item.globalRank <= 3}}" class="medal" style="background:{{item.medalBg}};color:{{item.medalColor}};">{{item.globalRank}}</view>
+          <text wx:else class="rank-num">{{item.globalRank}}</text>
+        </view>
+
+        <!-- 选手 -->
+        <view class="cell cell--name">
+          <image class="avatar" src="{{item.avatar}}" mode="aspectFill" style="border-color:{{item.avatarBorder}};" />
+          <view class="name-wrap">
+            <view class="name">{{item.name}}</view>
+            <view wx:if="{{item.isDirect && item.directReason}}" class="reason">{{item.directReason}}</view>
+          </view>
+        </view>
+
+        <!-- 变化 -->
+        <view class="cell cell--change">
+          <view class="change change--{{item.changeType}}">{{item.changeText}}</view>
+        </view>
+
+        <!-- 总积分 -->
+        <view class="cell cell--score">
+          <text class="score" style="color:{{item.scoreColor}};">{{item.totalScore}}</text>
+          <text wx:if="{{item.isDirect}}" class="direct">直通</text>
+        </view>
+      </view>
+    </block>
+
+    <!-- 空状态 -->
+    <view wx:if="{{empty}}" class="empty">
+      <view class="empty__icon">🔍</view>
+      <view class="empty__text">未找到匹配选手</view>
+    </view>
+  </view>
+</view>
