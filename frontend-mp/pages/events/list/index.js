@@ -14,7 +14,7 @@ Page({
     list: [],
     total: 0
   },
-  //Status          int        `gorm:"default:0" json:"status"` // 0:草稿 1:报名中 2:报名截止 3:进行中 4:已结束
+
   onLoad() {
     this.applyFilter();
 
