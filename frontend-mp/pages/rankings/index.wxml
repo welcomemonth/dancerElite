@@ -1,9 +1,9 @@
 <view class="rank">
   <!-- 头部 -->
-  <view class="rank__head">
+  <!-- <view class="rank__head">
     <view class="rank__title">年度积分榜</view>
     <view class="rank__sub">2024赛季 · 实时更新</view>
-  </view>
+  </view> -->
 
   <!-- 舞种分段切换 -->
   <view class="seg">
