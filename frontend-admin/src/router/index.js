@@ -36,7 +36,7 @@ router.beforeEach(async (to, from, next) => {
 
   // 去登录页且已登录 → 跳管理页
   if (to.path === '/login' && token) {
-    return next('/admin/articles')
+    return next('/admin/')
   }
 
   // 需要认证但没 token → 跳登录
