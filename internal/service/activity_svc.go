@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/welcomemonth/dancer-elite/internal/model"
 	"github.com/welcomemonth/dancer-elite/internal/pkg/errcode"
@@ -46,6 +47,30 @@ func (s *ActivityService) Create(ctx context.Context, activity *model.Activity) 
 		activity.SeasonID = season.ID
 	}
 	return s.st.ActivityRepo.Create(ctx, activity)
+}
+
+// ReconcileStatuses 根据时间自动推进活动状态（幂等，可反复执行）
+func (s *ActivityService) ReconcileStatuses(ctx context.Context) (int64, error) {
+	now := time.Now()
+	transitions := []struct {
+		from, to int
+		cond     string
+	}{
+		{1, 2, "reg_end_time IS NOT NULL AND reg_end_time < ?"}, // 报名中 → 报名截止
+		{2, 3, "start_time <= ?"},                               // 报名截止 → 进行中
+		{3, 4, "end_time < ?"},                                  // 进行中 → 已结束
+	}
+	var total int64
+	for _, t := range transitions {
+		res := s.st.DB().Model(&model.Activity{}).
+			Where("status = ? AND deleted_at IS NULL AND "+t.cond, t.from, now).
+			Update("status", t.to)
+		if res.Error != nil {
+			return total, res.Error
+		}
+		total += res.RowsAffected
+	}
+	return total, nil
 }
 
 // Update 更新活动

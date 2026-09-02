@@ -64,6 +64,20 @@ func (s *Server) Run() error {
 		}
 	}()
 
+	// 启动定时器，每分钟检查一下活动状态
+	go func() {
+		ticker := time.NewTicker(1 * time.Hour) // 频率按需，1 分钟足够
+		defer ticker.Stop()
+		for {
+			s.v1Service.Activity.ReconcileStatuses(context.Background()) // 启动后先跑一次
+			select {
+			case <-ticker.C:
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
 	// 等待关闭信号
 	<-ctx.Done()
 	log.Println("收到关闭信号，正在优雅关闭...")
