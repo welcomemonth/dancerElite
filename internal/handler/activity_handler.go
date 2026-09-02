@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/welcomemonth/dancer-elite/internal/model"
+	"github.com/welcomemonth/dancer-elite/internal/pkg/errcode"
 	"github.com/welcomemonth/dancer-elite/internal/pkg/response"
 	"github.com/welcomemonth/dancer-elite/internal/service"
 )
@@ -140,6 +141,10 @@ func (h *ActivityHandler) Update(c *gin.Context) {
 	}
 
 	if err := h.svc.Update(c.Request.Context(), id, updates); err != nil {
+		if err == errcode.ErrActivityLocked {
+			response.BadRequest(c, err.Error())
+			return
+		}
 		response.ServerError(c, err.Error())
 		return
 	}

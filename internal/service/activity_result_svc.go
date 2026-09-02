@@ -123,16 +123,20 @@ func (s *ActivityResultService) resolveSeason(ctx context.Context, result *model
 	return nil
 }
 
-// validate 校验必填字段及活动、选手是否存在
+// validate 校验必填字段及活动、选手是否存在，且活动必须已结束
 func (s *ActivityResultService) validate(ctx context.Context, result *model.ActivityResult) error {
 	if result.ActivityID == 0 || result.PlayerID == 0 || result.DanceType == "" || result.AgeGroup == "" {
 		return errcode.ErrInvalidParam
 	}
-	if _, err := s.st.ActivityRepo.GetByID(ctx, result.ActivityID); err != nil {
+	act, err := s.st.ActivityRepo.GetByID(ctx, result.ActivityID)
+	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return errcode.ErrNotFound
 		}
 		return err
+	}
+	if act.Status != 4 {
+		return errcode.ErrActivityNotEnded
 	}
 	if _, err := s.st.PlayerRepo.GetByID(ctx, result.PlayerID); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

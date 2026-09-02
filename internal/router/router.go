@@ -208,6 +208,7 @@ func registerAdminRoutes(api *gin.RouterGroup, svc *service.APIV1Service) {
 		results := adminAuth.Group("/activity-results")
 		results.GET("/", activityResultHandler.List)
 		results.POST("/", activityResultHandler.Create)
+		results.POST("/import", activityResultHandler.Import)
 		results.GET("/:id", activityResultHandler.Get)
 		results.PUT("/:id", activityResultHandler.Update)
 		results.DELETE("/:id", activityResultHandler.Delete)

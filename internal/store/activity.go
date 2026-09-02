@@ -9,10 +9,11 @@ import (
 	"github.com/welcomemonth/dancer-elite/internal/repository"
 )
 
-// ActivityListItem 活动列表项（含报名人数）
+// ActivityListItem 活动列表项（含报名人数、成绩条数）
 type ActivityListItem struct {
 	model.Activity
-	RegCount int64 `json:"reg_count"`
+	RegCount    int64 `json:"reg_count"`
+	ResultCount int64 `json:"result_count"`
 }
 
 // ActivityRepo 活动数据访问接口
@@ -41,8 +42,11 @@ func NewActivityRepository(db *gorm.DB) ActivityRepo {
 	}
 }
 
-// regCountSelect 报名人数子查询（status IN (0,1) 即待支付+已支付）
-const regCountSelect = "activities.*, (SELECT COUNT(*) FROM registrations WHERE registrations.activity_id = activities.id AND registrations.status IN (0,1) AND registrations.deleted_at IS NULL) AS reg_count"
+// regCountSelect 报名人数 + 成绩条数子查询
+// 报名人数：status IN (0,1) 即待支付+已支付；成绩条数：该活动下未删除的成绩记录数
+const regCountSelect = "activities.*, " +
+	"(SELECT COUNT(*) FROM registrations WHERE registrations.activity_id = activities.id AND registrations.status IN (0,1) AND registrations.deleted_at IS NULL) AS reg_count, " +
+	"(SELECT COUNT(*) FROM activity_results WHERE activity_results.activity_id = activities.id AND activity_results.deleted_at IS NULL) AS result_count"
 
 func (r *ActivityRepository) base(ctx context.Context) *gorm.DB {
 	return r.db.WithContext(ctx).Table("activities").Select(regCountSelect)

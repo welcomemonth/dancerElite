@@ -31,6 +31,8 @@ var (
 	ErrRoleInUse                = errors.New("该角色正在被使用，无法删除")
 	ErrActivityHasRegistrations = errors.New("活动存在报名记录，无法删除")
 	ErrActivityHasResults       = errors.New("活动存在成绩记录，无法删除")
+	ErrActivityLocked           = errors.New("活动报名已截止或已开始，无法修改")
+	ErrActivityNotEnded         = errors.New("仅已结束的活动才能录入成绩")
 	ErrActivityResultExists     = errors.New("该活动下该选手该舞种的成绩已存在")
 	ErrRegistrationNotFound     = errors.New("报名记录不存在")
 	ErrRegistrationCancelled    = errors.New("报名已取消")

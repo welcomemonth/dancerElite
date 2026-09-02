@@ -49,7 +49,15 @@ func (s *ActivityService) Create(ctx context.Context, activity *model.Activity) 
 }
 
 // Update 更新活动
+// 报名截止（status>=2）之后活动信息不允许再修改。
 func (s *ActivityService) Update(ctx context.Context, id int64, updates map[string]any) error {
+	act, err := s.st.ActivityRepo.GetByID(ctx, id)
+	if err != nil {
+		return errcode.ErrNotFound
+	}
+	if act.Status >= 2 {
+		return errcode.ErrActivityLocked
+	}
 	return s.st.ActivityRepo.Update(ctx, id, updates)
 }
 
