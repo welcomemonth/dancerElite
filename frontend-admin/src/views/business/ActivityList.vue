@@ -28,6 +28,13 @@
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="title" label="活动名称" show-overflow-tooltip />
         <el-table-column prop="location" label="地点" width="150" show-overflow-tooltip />
+        <el-table-column label="等级" width="90">
+          <template #default="scope">
+            <el-tag :type="scope.row.level === '超级赛' ? 'warning' : 'primary'" size="small">
+              {{ scope.row.level || '甲级赛' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column label="活动时间" width="180">
           <template #default="scope">
             {{ formatDate(scope.row.start_time) }}

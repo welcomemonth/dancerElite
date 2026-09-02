@@ -120,11 +120,35 @@ func (s *AnnualRankingService) RecalculateSeason(ctx context.Context, seasonID i
 		return 0, err
 	}
 
-	// 3. 按组统计，取最高 3 场积分之和
+	// 2.5 读取本赛季赛事等级，用于直通总决赛判定
+	activities, err := s.st.ActivityRepo.FindAll(ctx,
+		func(db *gorm.DB) *gorm.DB { return db.Where("season_id = ?", seasonID) },
+	)
+	if err != nil {
+		return 0, err
+	}
+	activityLevel := make(map[int64]string, len(activities))
+	for _, a := range activities {
+		activityLevel[a.ID] = a.Level
+	}
+
+	// 3. 按组统计，取最高 3 场积分之和；同时判定直通（甲级赛冠军 / 超级赛冠亚军，布尔置位，多次夺冠也只直通一次）
 	pointsByKey := make(map[rankingGroupKey][]int)
+	directByKey := make(map[rankingGroupKey]bool)
 	for _, r := range results {
 		k := rankingGroupKey{r.AgeGroup, r.DanceType, r.PlayerID}
 		pointsByKey[k] = append(pointsByKey[k], r.Points)
+
+		switch activityLevel[r.ActivityID] {
+		case model.ActivityLevelA:
+			if r.Rank == 1 {
+				directByKey[k] = true
+			}
+		case model.ActivityLevelSuper:
+			if r.Rank >= 1 && r.Rank <= 2 {
+				directByKey[k] = true
+			}
+		}
 	}
 
 	type entry struct {
@@ -170,16 +194,17 @@ func (s *AnnualRankingService) RecalculateSeason(ctx context.Context, seasonID i
 				rankChange = prev - rank // 正数=排名上升
 			}
 			newList = append(newList, model.AnnualRanking{
-				SeasonID:      seasonID,
-				AgeGroup:      e.key.AgeGroup,
-				DanceType:     e.key.DanceType,
-				PlayerID:      e.key.PlayerID,
-				TotalPoints:   e.totalPoints,
-				Rank:          rank,
-				PreviousRank:  prev,
-				RankChange:    rankChange,
-				ScoreCount:    e.scoreCount,
-				LastUpdatedAt: now,
+				SeasonID:        seasonID,
+				AgeGroup:        e.key.AgeGroup,
+				DanceType:       e.key.DanceType,
+				PlayerID:        e.key.PlayerID,
+				TotalPoints:     e.totalPoints,
+				Rank:            rank,
+				PreviousRank:    prev,
+				RankChange:      rankChange,
+				ScoreCount:      e.scoreCount,
+				LastUpdatedAt:   now,
+				IsDirectAdvance: directByKey[e.key],
 			})
 		}
 	}

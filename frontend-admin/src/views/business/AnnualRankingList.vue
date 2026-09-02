@@ -34,6 +34,12 @@
         <el-table-column prop="age_group" label="级别" width="80" />
         <el-table-column prop="dance_type" label="舞种" width="110" />
         <el-table-column prop="total_points" label="总积分" width="90" />
+        <el-table-column label="直通决赛" width="90">
+          <template #default="scope">
+            <el-tag v-if="scope.row.is_direct_advance" type="warning" size="small">直通</el-tag>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="score_count" label="计入场次" width="90" />
         <el-table-column label="排名变化" width="100">
           <template #default="scope">

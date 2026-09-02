@@ -35,6 +35,7 @@ type activityRequest struct {
 	MaxParticipants int        `json:"max_participants"`
 	Price           float64    `json:"price"`
 	Status          int        `json:"status"`
+	Level           string     `json:"level" binding:"required"` // 赛事等级：甲级赛/超级赛
 	SeasonID        int64      `json:"season_id"`
 	AgeGroups       []string   `json:"age_groups"`
 	DanceTypes      []string   `json:"dance_types"`
@@ -95,6 +96,7 @@ func (h *ActivityHandler) Create(c *gin.Context) {
 		MaxParticipants: req.MaxParticipants,
 		Price:           req.Price,
 		Status:          req.Status,
+		Level:           req.Level,
 		SeasonID:        req.SeasonID,
 		AgeGroups:       model.StringSlice(req.AgeGroups),
 		DanceTypes:      model.StringSlice(req.DanceTypes),
@@ -136,6 +138,7 @@ func (h *ActivityHandler) Update(c *gin.Context) {
 		"max_participants": req.MaxParticipants,
 		"price":            req.Price,
 		"status":           req.Status,
+		"level":            req.Level,
 		"age_groups":       model.StringSlice(req.AgeGroups),
 		"dance_types":      model.StringSlice(req.DanceTypes),
 	}

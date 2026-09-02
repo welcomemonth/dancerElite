@@ -35,6 +35,7 @@ type RankingItem struct {
 	ScoreCount   int    `json:"score_count"`
 	RankChange   int    `json:"rank_change"`
 	PreviousRank int    `json:"previous_rank"`
+	IsDirect     bool   `json:"is_direct"` // 是否直通年底冠军决赛
 }
 
 // OrgRankingItem 机构排行榜条目
@@ -126,6 +127,7 @@ func (s *RankingService) Leaderboard(ctx context.Context, seasonID int64, ageGro
 			ScoreCount:   ar.ScoreCount,
 			RankChange:   ar.RankChange,
 			PreviousRank: ar.PreviousRank,
+			IsDirect:     ar.IsDirectAdvance,
 		}
 		if ar.Player != nil {
 			item.Name = ar.Player.RealName

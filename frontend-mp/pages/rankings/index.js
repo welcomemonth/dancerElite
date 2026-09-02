@@ -1,11 +1,13 @@
 const { LEVELS, DANCE_STYLES, ADVANCE_QUOTA, getDancers } = require('../../utils/leaderboard.js');
 
+const api = require('../../request/index.js');
+
 Page({
   data: {
     levels: LEVELS,
     styles: DANCE_STYLES,
-    level: 'U13',
-    style: '古典舞',
+    level: 'U11',
+    style: '民族民间舞',
     keyword: '',
     rows: [],
     empty: false,
@@ -17,9 +19,11 @@ Page({
     this.apply();
     await getApp().getSeason().then((season) => {
       this.setData({ season });
-      console.log("season data2= ", season);
     });
-    console.log("season data1= ", this.data.season);
+    // 获取年度积分榜 u11-民族民间舞 排名
+    api.ranking.leaderboard({seasonId: this.data.season.id, ageGroup: "U11", danceType: "民族民间舞"})
+          .then((res) => console.log('[年度积分榜]', res))
+          .catch((err) => console.error('[年度积分榜] 调用失败', err));;
   },
 
   onLevel(e) {

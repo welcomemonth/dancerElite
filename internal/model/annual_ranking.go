@@ -12,8 +12,9 @@ type AnnualRanking struct {
 	Rank          int       `gorm:"not null" json:"rank"`                   // 当前排名
 	PreviousRank  int       `gorm:"default:0" json:"previous_rank"`         // 上一次排名（0表示新上榜）
 	RankChange    int       `gorm:"default:0" json:"rank_change"`           // 正数上升，负数下降，0不变
-	ScoreCount    int       `gorm:"default:0" json:"score_count"`           // 实际计入场次（1~3）
-	LastUpdatedAt time.Time `json:"last_updated_at"`                        // 本次重算时间
+	ScoreCount      int       `gorm:"default:0" json:"score_count"`           // 实际计入场次（1~3）
+	LastUpdatedAt   time.Time `json:"last_updated_at"`                        // 本次重算时间
+	IsDirectAdvance bool      `gorm:"default:false" json:"is_direct_advance"` // 是否直通年底冠军决赛（甲级赛冠军/超级赛冠亚军，重算时写入）
 
 	// 唯一：一个赛季 + 年龄组 + 舞种 + 选手 只有一条
 	// uniqueIndex: uk_season_age_dance_player

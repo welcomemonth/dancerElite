@@ -44,6 +44,13 @@
           <el-input v-model="form.location" placeholder="请输入活动地点" />
         </el-form-item>
 
+        <el-form-item label="赛事等级" prop="level">
+          <el-radio-group v-model="form.level">
+            <el-radio value="甲级赛">甲级赛（冠军直通年底冠军决赛）</el-radio>
+            <el-radio value="超级赛">超级赛（冠亚军直通年底冠军决赛）</el-radio>
+          </el-radio-group>
+        </el-form-item>
+
         <el-form-item label="级别组合" prop="age_groups">
           <el-select v-model="form.age_groups" multiple collapse-tags placeholder="可多选，U11/U13/U15（可扩展）" style="width: 100%">
             <el-option v-for="g in AGE_GROUP_OPTIONS" :key="g" :label="g" :value="g" />
@@ -157,6 +164,7 @@ const form = ref({
   max_participants: 0,
   price: 0,
   status: 0,
+  level: '甲级赛',
   age_groups: [],
   dance_types: []
 })
@@ -200,6 +208,7 @@ const loadActivity = async () => {
       max_participants: data.max_participants,
       price: data.price,
       status: data.status,
+      level: data.level || '甲级赛',
       age_groups: data.age_groups || [],
       dance_types: data.dance_types || [],
     }
