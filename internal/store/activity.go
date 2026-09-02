@@ -97,7 +97,7 @@ func (r *ActivityRepository) ListPublishedWithRegCount(ctx context.Context, page
 func (r *ActivityRepository) GetPublishedWithRegCount(ctx context.Context, id int64) (*ActivityListItem, error) {
 	var item ActivityListItem
 	err := r.base(ctx).
-		Where("activities.id = ? AND activities.status IN (1,2,3,4) AND activities.deleted_at IS NULL", id).
+		Where("activities.id = ? AND activities.status IN (1,2,3) AND activities.deleted_at IS NULL", id).
 		First(&item).Error
 	if err != nil {
 		return nil, err

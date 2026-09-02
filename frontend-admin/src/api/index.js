@@ -75,6 +75,13 @@ export const activityApi = {
   updateStatus: (id, data) => request.put(`/api/admin/activities/${id}/status`, data)
 }
 
+// ==================== 成绩管理 ====================
+export const activityResultApi = {
+  import: formData => request.post('/api/admin/activity-results/import', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+}
+
 // ==================== 赛季管理 ====================
 export const seasonApi = {
   list: () => request.get('/api/admin/seasons/'),

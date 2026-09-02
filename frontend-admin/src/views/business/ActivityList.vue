@@ -63,6 +63,16 @@
             <el-button text type="primary" :icon="Edit" @click="editActivity(scope.row.id)" v-permission="'activity:update'">编辑</el-button>
             <el-button
               text
+              type="success"
+              :icon="Upload"
+              @click="openScoreUpload(scope.row)"
+              v-if="scope.row.status === 4"
+              v-permission="'activity:update'"
+            >
+              成绩上传
+            </el-button>
+            <el-button
+              text
               :type="scope.row.status === 1 ? 'warning' : 'success'"
               :icon="scope.row.status === 1 ? VideoPause : VideoPlay"
               @click="toggleStatus(scope.row)"
@@ -86,6 +96,40 @@
         @current-change="loadActivities"
       />
     </el-card>
+
+    <el-dialog v-model="uploadVisible" title="成绩上传" width="520px" @closed="resetUpload">
+      <el-form label-width="90px">
+        <el-form-item label="活动">
+          <span>{{ uploadActivity?.title }}</span>
+        </el-form-item>
+        <el-form-item label="级别" required>
+          <el-select v-model="uploadForm.age_group" placeholder="请选择级别" style="width: 100%">
+            <el-option v-for="g in (uploadActivity?.age_groups || [])" :key="g" :label="g" :value="g" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="舞种" required>
+          <el-select v-model="uploadForm.dance_type" placeholder="请选择舞种" style="width: 100%">
+            <el-option v-for="d in (uploadActivity?.dance_types || [])" :key="d" :label="d" :value="d" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="成绩文件" required>
+          <el-upload
+            :auto-upload="false"
+            :limit="1"
+            accept=".xlsx"
+            :on-change="onFileChange"
+            :on-remove="onFileRemove"
+            :file-list="fileList"
+          >
+            <el-button :icon="Upload">选择 .xlsx 文件</el-button>
+          </el-upload>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="uploadVisible = false">取消</el-button>
+        <el-button type="primary" :loading="uploading" @click="submitScoreUpload">上传</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -93,8 +137,8 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Edit, Delete, VideoPlay, VideoPause } from '@element-plus/icons-vue'
-import { activityApi } from '../../api'
+import { Plus, Edit, Delete, VideoPlay, VideoPause, Upload } from '@element-plus/icons-vue'
+import { activityApi, activityResultApi } from '../../api'
 
 const router = useRouter()
 const activities = ref([])
@@ -163,6 +207,73 @@ const deleteActivity = async (row) => {
     loadActivities()
   } catch (error) {
     // 后端具体错误（如“活动存在报名记录，无法删除”）已由请求拦截器统一弹出
+  }
+}
+
+// ===== 成绩上传 =====
+const uploadVisible = ref(false)
+const uploadActivity = ref(null)
+const uploadForm = ref({ age_group: '', dance_type: '' })
+const fileList = ref([])
+const uploading = ref(false)
+
+const openScoreUpload = (row) => {
+  uploadActivity.value = row
+  uploadForm.value = {
+    age_group: row.age_groups?.[0] || '',
+    dance_type: row.dance_types?.[0] || ''
+  }
+  fileList.value = []
+  uploadVisible.value = true
+}
+
+const onFileChange = (file) => {
+  fileList.value = [file]
+}
+
+const onFileRemove = () => {
+  fileList.value = []
+}
+
+const resetUpload = () => {
+  uploadActivity.value = null
+  uploadForm.value = { age_group: '', dance_type: '' }
+  fileList.value = []
+  uploading.value = false
+}
+
+const submitScoreUpload = async () => {
+  if (!uploadForm.value.age_group || !uploadForm.value.dance_type) {
+    ElMessage.warning('请选择级别和舞种')
+    return
+  }
+  const file = fileList.value[0]?.raw
+  if (!file) {
+    ElMessage.warning('请选择要上传的成绩文件')
+    return
+  }
+
+  const formData = new FormData()
+  formData.append('activity_id', uploadActivity.value.id)
+  formData.append('age_group', uploadForm.value.age_group)
+  formData.append('dance_type', uploadForm.value.dance_type)
+  formData.append('file', file)
+
+  uploading.value = true
+  try {
+    const res = await activityResultApi.import(formData)
+    const { total, imported, skipped, errors } = res || {}
+    const failed = errors?.length || 0
+    ElMessage.success(`导入完成：共 ${total} 条，成功 ${imported} 条，跳过 ${skipped} 条${failed ? `，失败 ${failed} 条` : ''}`)
+    if (failed) {
+      console.warn('成绩导入错误明细：', errors)
+    }
+    uploadVisible.value = false
+    loadActivities()
+  } catch (error) {
+    // 错误已在 request.js 拦截器中统一弹出
+  } finally {
+    uploading.value = false
   }
 }
 

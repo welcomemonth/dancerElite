@@ -21,7 +21,7 @@ func TestPlayerRepoCRUD(t *testing.T) {
 	repo := newTestPlayerRepo(t)
 
 	p := &model.Player{
-		UserID:     1,
+		UserID:     nil,
 		RealName:   "张三",
 		Gender:     "male",
 		IDCard:     "110101********1234",

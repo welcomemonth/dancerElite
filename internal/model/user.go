@@ -21,7 +21,7 @@ func (User) TableName() string {
 
 type Player struct {
 	BaseModel
-	UserID      int64  `gorm:"uniqueIndex;not null" json:"user_id"` // 1:1 绑定
+	UserID      *int64 `gorm:"uniqueIndex" json:"user_id"` // 1:1 绑定
 	RealName    string `gorm:"size:32;not null" json:"real_name"`
 	Gender      string `gorm:"size:16;not null" json:"gender"`  // male / female
 	IDCard      string `gorm:"size:32;not null" json:"id_card"` // 脱敏后，如 110101********1234

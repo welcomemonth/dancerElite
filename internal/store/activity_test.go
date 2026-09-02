@@ -14,7 +14,7 @@ import (
 
 func newTestActivityRepo(t *testing.T) (ActivityRepo, *gorm.DB) {
 	t.Helper()
-	db := newTestDB(t, &model.Season{}, &model.Activity{}, &model.Registration{})
+	db := newTestDB(t, &model.Season{}, &model.Activity{}, &model.Registration{}, &model.ActivityResult{})
 	return NewActivityRepository(db), db
 }
 
@@ -111,6 +111,7 @@ func TestActivityRepoGetPublishedWithRegCount(t *testing.T) {
 	assert.True(t, errors.Is(err, gorm.ErrRecordNotFound))
 
 	_, err = repo.GetPublishedWithRegCount(context.Background(), ended.ID)
+	t.Logf("%t", err)
 	assert.True(t, errors.Is(err, gorm.ErrRecordNotFound))
 
 	got, err := repo.GetPublishedWithRegCount(context.Background(), ongoing.ID)

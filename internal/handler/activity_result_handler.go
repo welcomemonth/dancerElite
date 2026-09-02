@@ -206,16 +206,11 @@ func (h *ActivityResultHandler) Import(c *gin.Context) {
 		return
 	}
 
-	// TODO: 在此实现成绩入库的业务逻辑
-	// 1. 校验活动状态为「已结束」（ActivityRepo.GetByID 判断 status == 4）
-	// 2. 按身份证脱敏 / 姓名匹配选手（utils.MaskIDCard + PlayerRepo.FindAll）
-	// 3. 逐条创建 model.ActivityResult（activity_id / season_id / player_id / dance_type / age_group / rank / points / award），并去重
-	// 4. 返回导入结果 {imported, skipped, errors}
+	result, err := h.svc.ImportResults(c.Request.Context(), activityID, ageGroup, danceType, records)
+	if err != nil {
+		h.handleCreateError(c, err)
+		return
+	}
 
-	response.OK(c, gin.H{
-		"total":      len(records),
-		"age_group":  ageGroup,
-		"dance_type": danceType,
-		"records":    records,
-	})
+	response.OK(c, result)
 }
