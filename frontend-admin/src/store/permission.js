@@ -22,6 +22,7 @@ const componentMap = {
   'registrations': () => import('../views/business/RegistrationList.vue'),
   'payments': () => import('../views/business/PaymentList.vue'),
   'seasons': () => import('../views/business/SeasonList.vue'),
+  'players': () => import('../views/business/PlayerList.vue'),
   'activity-results': () => import('../views/business/ActivityResultList.vue'),
   'annual-rankings': () => import('../views/business/AnnualRankingList.vue'),
   'codegen': () => import('../views/codegen/CodegenList.vue'),

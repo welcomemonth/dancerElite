@@ -18,6 +18,7 @@ type APIV1Service struct {
 	Role           *RoleService
 	Menu           *MenuService
 	User           *UserService
+	Player         *PlayerService
 	Activity       *ActivityService
 	Registration   *RegistrationService
 	Season         *SeasonService
@@ -46,6 +47,7 @@ func NewAPIV1Service(cfg *config.Config, st *store.Store) *APIV1Service {
 	svc.Role = NewRoleService(st)
 	svc.Menu = NewMenuService(st)
 	svc.User = NewUserService(st, cfg.Wechat.AppID, cfg.Wechat.Secret, cfg.JWT.Secret)
+	svc.Player = NewPlayerService(st)
 	svc.Activity = NewActivityService(st)
 	svc.Registration = NewRegistrationService(st)
 	svc.Season = NewSeasonService(st)

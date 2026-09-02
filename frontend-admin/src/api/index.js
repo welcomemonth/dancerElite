@@ -126,6 +126,14 @@ export const userApi = {
   delete: id => request.delete(`/api/admin/users/${id}`)
 }
 
+// ==================== 选手管理 ====================
+export const playerApi = {
+  list: params => request.get('/api/admin/players/', { params }),
+  get: id => request.get(`/api/admin/players/${id}`),
+  update: (id, data) => request.put(`/api/admin/players/${id}`, data),
+  delete: id => request.delete(`/api/admin/players/${id}`)
+}
+
 // ==================== 系统配置 ====================
 export const systemConfigApi = {
   list: params => request.get('/api/admin/system-configs/', { params }),

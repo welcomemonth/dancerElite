@@ -99,6 +99,7 @@ func registerAdminRoutes(api *gin.RouterGroup, svc *service.APIV1Service) {
 	roleHandler := handler.NewRoleHandler(svc.Role)
 	menuHandler := handler.NewMenuHandler(svc.Menu)
 	userHandler := handler.NewUserHandler(svc.User)
+	playerHandler := handler.NewPlayerHandler(svc.Player)
 	uploadHandler := handler.NewUploadHandler()
 	activityHandler := handler.NewActivityHandler(svc.Activity)
 	registrationHandler := handler.NewRegistrationHandler(svc.Registration)
@@ -144,6 +145,13 @@ func registerAdminRoutes(api *gin.RouterGroup, svc *service.APIV1Service) {
 		users.GET("/:id", userHandler.Get)
 		users.PUT("/:id", userHandler.Update)
 		users.DELETE("/:id", userHandler.Delete)
+
+		// 选手管理
+		players := adminAuth.Group("/players")
+		players.GET("/", playerHandler.List)
+		players.GET("/:id", playerHandler.Get)
+		players.PUT("/:id", playerHandler.Update)
+		players.DELETE("/:id", playerHandler.Delete)
 
 		// 文章管理
 		articles := adminAuth.Group("/articles")
