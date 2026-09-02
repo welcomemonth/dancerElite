@@ -9,11 +9,17 @@ Page({
     keyword: '',
     rows: [],
     empty: false,
-    total: 0
+    total: 0,
+    season: null
   },
 
-  onLoad() {
+  async onLoad() {
     this.apply();
+    await getApp().getSeason().then((season) => {
+      this.setData({ season });
+      console.log("season data2= ", season);
+    });
+    console.log("season data1= ", this.data.season);
   },
 
   onLevel(e) {

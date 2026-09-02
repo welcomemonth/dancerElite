@@ -22,11 +22,6 @@ Page({
     api.activity.list({ page: 1, pageSize: 10 })
       .then((res) => console.log('[赛事列表接口]', res))
       .catch((err) => console.error('[赛事列表接口] 调用失败', err));
-
-    // 临时：调当前激活赛季接口，仅控制台输出，暂不接入页面渲染
-    api.season.active()
-      .then((res) => console.log('[激活赛季接口]', res))
-      .catch((err) => console.error('[激活赛季接口] 调用失败', err));
   },
 
   onInput(e) {

@@ -23,8 +23,35 @@ App({
         wx.showToast({ title: '微信登录失败', icon: 'none' });
       }
     });
+
+    // 进入小程序时拉取当前激活赛季（Promise 缓存，全小程序共享一次请求）
+    this.getSeason().catch(() => {});
   },
+
+  /**
+   * 获取当前激活赛季，返回 Promise。
+   * 首次调用发请求，之后直接复用缓存的 Promise，页面无需关心时序：
+   *   getApp().getSeason().then(season => this.setData({ season }))
+   * 失败时清空缓存，下次调用自动重试。
+   */
+  getSeason() {
+    if (!this.seasonReady) {
+      this.seasonReady = api.season.active()
+        .then((season) => {
+          this.globalData.season = season;
+          return season;
+        })
+        .catch((err) => {
+          this.seasonReady = null; // 允许下次调用重试
+          console.error('[激活赛季] 获取失败', err);
+          throw err;
+        });
+    }
+    return this.seasonReady;
+  },
+
   globalData: {
-    user: null
+    user: null,
+    season: null
   }
 });
