@@ -73,6 +73,16 @@
             </el-button>
             <el-button
               text
+              type="info"
+              :icon="View"
+              @click="viewResults(scope.row)"
+              v-if="scope.row.status === 4"
+              v-permission="'activity_result:list'"
+            >
+              查看成绩
+            </el-button>
+            <el-button
+              text
               :type="scope.row.status === 1 ? 'warning' : 'success'"
               :icon="scope.row.status === 1 ? VideoPause : VideoPlay"
               @click="toggleStatus(scope.row)"
@@ -137,7 +147,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Edit, Delete, VideoPlay, VideoPause, Upload } from '@element-plus/icons-vue'
+import { Plus, Edit, Delete, VideoPlay, VideoPause, Upload, View } from '@element-plus/icons-vue'
 import { activityApi, activityResultApi } from '../../api'
 
 const router = useRouter()
@@ -180,6 +190,7 @@ const loadActivities = async () => {
 
 const createActivity = () => router.push('/admin/activities/create')
 const editActivity = (id) => router.push(`/admin/activities/edit/${id}`)
+const viewResults = (row) => router.push({ path: '/admin/activity-results', query: { activity_id: row.id } })
 
 const toggleStatus = async (row) => {
   const newStatus = row.status === 1 ? 2 : 1

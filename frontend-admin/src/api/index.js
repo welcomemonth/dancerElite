@@ -77,6 +77,10 @@ export const activityApi = {
 
 // ==================== 成绩管理 ====================
 export const activityResultApi = {
+  list: params => request.get('/api/admin/activity-results/', { params }),
+  get: id => request.get(`/api/admin/activity-results/${id}`),
+  update: (id, data) => request.put(`/api/admin/activity-results/${id}`, data),
+  delete: id => request.delete(`/api/admin/activity-results/${id}`),
   import: formData => request.post('/api/admin/activity-results/import', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   })
