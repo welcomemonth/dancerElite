@@ -18,12 +18,13 @@ import (
 
 // ActivityResultService 赛事成绩管理服务
 type ActivityResultService struct {
-	st *store.Store
+	st      *store.Store
+	ranking *AnnualRankingService
 }
 
 // NewActivityResultService 创建赛事成绩服务
-func NewActivityResultService(st *store.Store) *ActivityResultService {
-	return &ActivityResultService{st: st}
+func NewActivityResultService(st *store.Store, ranking *AnnualRankingService) *ActivityResultService {
+	return &ActivityResultService{st: st, ranking: ranking}
 }
 
 // ActivityResultItem 成绩列表项（含活动标题、选手姓名）
@@ -99,17 +100,49 @@ func (s *ActivityResultService) Create(ctx context.Context, result *model.Activi
 	if exists {
 		return errcode.ErrActivityResultExists
 	}
-	return s.st.ActivityResultRepo.Create(ctx, result)
+	if err := s.st.ActivityResultRepo.Create(ctx, result); err != nil {
+		return err
+	}
+	s.recalcRanking(ctx, result.SeasonID)
+	return nil
 }
 
-// Update 更新成绩
+// Update 更新成绩（变更后重算相关赛季榜单）
 func (s *ActivityResultService) Update(ctx context.Context, id int64, updates map[string]any) error {
-	return s.st.ActivityResultRepo.Update(ctx, id, updates)
+	old, err := s.st.ActivityResultRepo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if err := s.st.ActivityResultRepo.Update(ctx, id, updates); err != nil {
+		return err
+	}
+
+	s.recalcRanking(ctx, old.SeasonID)
+	if v, ok := updates["season_id"].(int64); ok && v != 0 && v != old.SeasonID {
+		s.recalcRanking(ctx, v)
+	}
+	return nil
 }
 
-// Delete 删除成绩
+// Delete 删除成绩（删除后重算相关赛季榜单）
 func (s *ActivityResultService) Delete(ctx context.Context, id int64) error {
-	return s.st.ActivityResultRepo.Delete(ctx, id)
+	old, err := s.st.ActivityResultRepo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if err := s.st.ActivityResultRepo.Delete(ctx, id); err != nil {
+		return err
+	}
+	s.recalcRanking(ctx, old.SeasonID)
+	return nil
+}
+
+// recalcRanking 触发榜单重算（成绩已入库，重算失败不应影响录入，故忽略错误）
+func (s *ActivityResultService) recalcRanking(ctx context.Context, seasonID int64) {
+	if s.ranking == nil || seasonID <= 0 {
+		return
+	}
+	_, _ = s.ranking.RecalculateSeason(ctx, seasonID)
 }
 
 // resolveSeason 未显式传入赛季时，优先取所属活动的赛季，其次取当前生效赛季
@@ -219,6 +252,10 @@ func (s *ActivityResultService) ImportResults(ctx context.Context, activityID in
 			continue
 		}
 		res.Imported++
+	}
+
+	if res.Imported > 0 {
+		s.recalcRanking(ctx, act.SeasonID)
 	}
 
 	return res, nil

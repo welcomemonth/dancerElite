@@ -88,6 +88,9 @@ func (s *MenuService) InitDefaultMenus(ctx context.Context) error {
 		if err := s.ensureActivityResultsMenu(ctx); err != nil {
 			return err
 		}
+		if err := s.ensureAnnualRankingsMenu(ctx); err != nil {
+			return err
+		}
 		return s.ensureDefaultMenuPermissions(ctx)
 	}
 
@@ -113,6 +116,7 @@ func (s *MenuService) InitDefaultMenus(ctx context.Context) error {
 		{ParentID: bizDir.ID, Name: "payments", Title: "支付管理", Path: "/admin/payments", Component: "business/PaymentList", Icon: "Money", Sort: 3, Type: 2, Status: 1},
 		{ParentID: bizDir.ID, Name: "seasons", Title: "赛季管理", Path: "/admin/seasons", Component: "business/SeasonList", Icon: "Trophy", Sort: 4, Type: 2, Status: 1},
 		{ParentID: bizDir.ID, Name: "activity-results", Title: "成绩管理", Path: "/admin/activity-results", Component: "business/ActivityResultList", Icon: "DataLine", Sort: 5, Type: 2, Status: 1},
+		{ParentID: bizDir.ID, Name: "annual-rankings", Title: "年度积分榜", Path: "/admin/annual-rankings", Component: "business/AnnualRankingList", Icon: "TrendCharts", Sort: 6, Type: 2, Status: 1},
 	}
 	for i := range bizMenus {
 		s.st.DB().WithContext(ctx).Create(&bizMenus[i])
@@ -196,6 +200,33 @@ func (s *MenuService) ensureActivityResultsMenu(ctx context.Context) error {
 		Status:    1,
 	}
 	return s.st.DB().WithContext(ctx).Create(&resultMenu).Error
+}
+
+// ensureAnnualRankingsMenu 确保「年度积分榜」菜单存在（幂等，兼容菜单表已有数据但缺少该菜单的情况）
+func (s *MenuService) ensureAnnualRankingsMenu(ctx context.Context) error {
+	var count int64
+	s.st.DB().WithContext(ctx).Model(&model.Menu{}).Where("name = ? AND type = 2", "annual-rankings").Count(&count)
+	if count > 0 {
+		return nil
+	}
+
+	var bizDir model.Menu
+	if err := s.st.DB().WithContext(ctx).Where("name = ? AND type = 1", "business").First(&bizDir).Error; err != nil {
+		return err
+	}
+
+	rankingMenu := model.Menu{
+		ParentID:  bizDir.ID,
+		Name:      "annual-rankings",
+		Title:     "年度积分榜",
+		Path:      "/admin/annual-rankings",
+		Component: "business/AnnualRankingList",
+		Icon:      "TrendCharts",
+		Sort:      6,
+		Type:      2,
+		Status:    1,
+	}
+	return s.st.DB().WithContext(ctx).Create(&rankingMenu).Error
 }
 
 type defaultPermission struct {
@@ -286,6 +317,13 @@ func (s *MenuService) ensureDefaultMenuPermissions(ctx context.Context) error {
 			{Action: "update", Title: "编辑成绩", Method: "PUT", Sort: 4},
 			{Action: "delete", Title: "删除成绩", Method: "DELETE", Sort: 5},
 		},
+		"annual-rankings": {
+			{Action: "list", Title: "查看积分榜", Method: "GET", Sort: 1},
+			{Action: "get", Title: "查看积分榜详情", Method: "GET", Sort: 2},
+			{Action: "create", Title: "重算积分榜", Method: "POST", Sort: 3},
+			{Action: "update", Title: "编辑积分榜", Method: "PUT", Sort: 4},
+			{Action: "delete", Title: "删除积分榜", Method: "DELETE", Sort: 5},
+		},
 		"registrations": {
 			{Action: "list", Title: "查看报名列表", Method: "GET", Sort: 1},
 			{Action: "get", Title: "查看报名详情", Method: "GET", Sort: 2},
@@ -350,6 +388,7 @@ func permissionModule(menuName string) string {
 		"system-configs":   "system_config",
 		"codegen-config":   "codegen",
 		"activity-results": "activity_result",
+		"annual-rankings":  "annual_ranking",
 	}
 	if module, ok := modules[menuName]; ok {
 		return module

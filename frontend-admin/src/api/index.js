@@ -86,6 +86,15 @@ export const activityResultApi = {
   })
 }
 
+// ==================== 年度积分榜 ====================
+export const annualRankingApi = {
+  list: params => request.get('/api/admin/annual-rankings/', { params }),
+  get: id => request.get(`/api/admin/annual-rankings/${id}`),
+  update: (id, data) => request.put(`/api/admin/annual-rankings/${id}`, data),
+  delete: id => request.delete(`/api/admin/annual-rankings/${id}`),
+  recalculate: data => request.post('/api/admin/annual-rankings/recalculate', data)
+}
+
 // ==================== 赛季管理 ====================
 export const seasonApi = {
   list: () => request.get('/api/admin/seasons/'),

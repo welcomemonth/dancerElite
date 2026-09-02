@@ -22,6 +22,7 @@ type APIV1Service struct {
 	Registration   *RegistrationService
 	Season         *SeasonService
 	ActivityResult *ActivityResultService
+	AnnualRanking  *AnnualRankingService
 	SystemConfig   *SystemConfigService
 	Payment        *PaymentService
 	Codegen        *CodegenService
@@ -48,7 +49,8 @@ func NewAPIV1Service(cfg *config.Config, st *store.Store) *APIV1Service {
 	svc.Activity = NewActivityService(st)
 	svc.Registration = NewRegistrationService(st)
 	svc.Season = NewSeasonService(st)
-	svc.ActivityResult = NewActivityResultService(st)
+	svc.AnnualRanking = NewAnnualRankingService(st)
+	svc.ActivityResult = NewActivityResultService(st, svc.AnnualRanking)
 	svc.Payment = NewPaymentService(st, svc.SystemConfig)
 	svc.Codegen = NewCodegenService(st)
 	svc.OperationLog = NewOperationLogService(st)

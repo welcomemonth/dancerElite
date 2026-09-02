@@ -104,6 +104,7 @@ func registerAdminRoutes(api *gin.RouterGroup, svc *service.APIV1Service) {
 	registrationHandler := handler.NewRegistrationHandler(svc.Registration)
 	seasonHandler := handler.NewSeasonHandler(svc.Season)
 	activityResultHandler := handler.NewActivityResultHandler(svc.ActivityResult)
+	annualRankingHandler := handler.NewAnnualRankingHandler(svc.AnnualRanking)
 	paymentHandler := handler.NewPaymentHandler(svc.Payment, svc.Registration, svc.Activity)
 	systemConfigHandler := handler.NewSystemConfigHandler(svc.SystemConfig)
 	codegenHandler := handler.NewCodegenHandler(svc.Codegen)
@@ -212,6 +213,14 @@ func registerAdminRoutes(api *gin.RouterGroup, svc *service.APIV1Service) {
 		results.GET("/:id", activityResultHandler.Get)
 		results.PUT("/:id", activityResultHandler.Update)
 		results.DELETE("/:id", activityResultHandler.Delete)
+
+		// 年度积分榜
+		annualRankings := adminAuth.Group("/annual-rankings")
+		annualRankings.GET("/", annualRankingHandler.List)
+		annualRankings.GET("/:id", annualRankingHandler.Get)
+		annualRankings.PUT("/:id", annualRankingHandler.Update)
+		annualRankings.DELETE("/:id", annualRankingHandler.Delete)
+		annualRankings.POST("/recalculate", annualRankingHandler.Recalculate)
 
 		// 报名管理
 		registrations := adminAuth.Group("/registrations")

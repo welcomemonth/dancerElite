@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"sort"
 	"testing"
 
 	"github.com/xuri/excelize/v2"
@@ -14,11 +15,18 @@ func createTestExcel(sheets map[string][][]string) *excelize.File {
 	// 删除默认的 Sheet1（后面我们自己创建）
 	f.DeleteSheet("Sheet1")
 
-	first := true
-	for name, rows := range sheets {
-		if first {
+	// 按 sheet 名排序，避免 Go map 遍历顺序随机导致「第一个 sheet」不稳定，
+	// 从而让依赖「第一个 sheet 含表头」的用例确定性通过。
+	names := make([]string, 0, len(sheets))
+	for name := range sheets {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+
+	for i, name := range names {
+		rows := sheets[name]
+		if i == 0 {
 			f.SetSheetName("Sheet1", name) // 第一个 sheet 改名
-			first = false
 		} else {
 			f.NewSheet(name)
 		}
