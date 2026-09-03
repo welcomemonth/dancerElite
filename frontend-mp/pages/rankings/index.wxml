@@ -49,7 +49,7 @@
 
   <!-- 榜单 -->
   <view class="tbody">
-    <block wx:for="{{rows}}" wx:key="id">
+    <block wx:for="{{rows}}" wx:key="player_id">
       <!-- 晋级区标签（首个晋级行上方） -->
       <view wx:if="{{item.showAdvancingLabel}}" class="zone-label">
         <text class="zone-label__text">晋级区</text>
@@ -69,16 +69,16 @@
       >
         <!-- 排名 -->
         <view class="cell cell--rank">
-          <view wx:if="{{item.globalRank <= 3}}" class="medal" style="background:{{item.medalBg}};color:{{item.medalColor}};">{{item.globalRank}}</view>
-          <text wx:else class="rank-num">{{item.globalRank}}</text>
+          <view wx:if="{{item.rank <= 3}}" class="medal" style="background:{{item.medalBg}};color:{{item.medalColor}};">{{item.rank}}</view>
+          <text wx:else class="rank-num">{{item.rank}}</text>
         </view>
 
         <!-- 选手 -->
         <view class="cell cell--name">
-          <image class="avatar" src="{{item.avatar}}" mode="aspectFill" style="border-color:{{item.avatarBorder}};" />
+          <image wx:if="{{item.avatar}}" class="avatar" src="{{item.avatar}}" mode="aspectFill" style="border-color:{{item.avatarBorder}};" />
+          <view wx:else class="avatar avatar--text" style="border-color:{{item.avatarBorder}};">{{item.avatarText}}</view>
           <view class="name-wrap">
             <view class="name">{{item.name}}</view>
-            <view wx:if="{{item.isDirect && item.directReason}}" class="reason">{{item.directReason}}</view>
           </view>
         </view>
 
@@ -89,8 +89,8 @@
 
         <!-- 总积分 -->
         <view class="cell cell--score">
-          <text class="score" style="color:{{item.scoreColor}};">{{item.totalScore}}</text>
-          <text wx:if="{{item.isDirect}}" class="direct">直通</text>
+          <text class="score" style="color:{{item.scoreColor}};">{{item.total_points}}</text>
+          <text wx:if="{{item.is_direct}}" class="direct">直通</text>
         </view>
       </view>
     </block>
