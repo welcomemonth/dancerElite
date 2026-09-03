@@ -56,9 +56,11 @@ func (s *ActivityService) ReconcileStatuses(ctx context.Context) (int64, error) 
 		from, to int
 		cond     string
 	}{
-		{1, 2, "reg_end_time IS NOT NULL AND reg_end_time < ?"}, // 报名中 → 报名截止
+		{1, 2, "reg_end_time IS NOT NULL AND reg_end_time < ?"}, // 报名中 → 报名截止（已过报名截止时间）
+		{1, 2, "start_time <= ?"},                               // 报名中 → 报名截止（活动已开始，禁止报名）
 		{2, 3, "start_time <= ?"},                               // 报名截止 → 进行中
 		{3, 4, "end_time < ?"},                                  // 进行中 → 已结束
+		{1, 4, "end_time < ?"},                                  // 报名中 直接到 活动结束
 	}
 	var total int64
 	for _, t := range transitions {
